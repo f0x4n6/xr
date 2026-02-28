@@ -16,6 +16,7 @@ cat image.dd | hee | uniq > events.log
 - [ ] Panic any time
 - [ ] Exit with `0` or `1`
 - [ ] No usage
+- [ ] No Windows
 - [ ] README as manpage
 - [ ] Answer the four primary questions
       - What?
