@@ -1,11 +1,15 @@
-# hee
-High Performance Event Extractor
+NAME
+====
 
-```
-cat image.dd | hee | uniq > events.log
-```
+**hee** — High Performance Event Extractor
 
-## TODO
+SYNOPSIS
+========
+
+**STDIN** | **hee** > **STDOUT**
+
+DESCRIPTION
+===========
 - [ ] Set process priority
 - [ ] Set max threads
 - [ ] Use byte pool
@@ -17,9 +21,20 @@ cat image.dd | hee | uniq > events.log
 - [ ] Exit with `0` or `1`
 - [ ] No usage
 - [ ] No Windows
-- [ ] README as manpage
+- [ ] No dependencies
+- [x] README as manpage
 - [ ] Answer the four primary questions
-      - What?
-      - When?
-      - Where?
-      - Who?
+  - What?
+  - When?
+  - Where?
+  - Who?
+
+EXAMPLES
+========
+
+cat nist.dd | hee | uniq > events.log
+
+SEE ALSO
+========
+
+**cat(1)**, **uniq(1)**
