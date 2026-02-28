@@ -14,12 +14,12 @@ DESCRIPTION
 - [ ] Set max threads
 - [ ] Use byte pool
 - [ ] Calculate pool limit on thread count
-- [ ] Read from `STDIN`
-- [ ] Write to `STDOUT`
+- [x] Read from `STDIN`
+- [x] Write to `STDOUT`
 - [ ] Ignore `STDERR`
-- [ ] Panic any time
-- [ ] Exit with `0` or `1`
-- [ ] No usage
+- [x] Panic any time
+- [x] Exit with `0` or `1`
+- [x] No usage
 - [ ] No Windows
 - [ ] No dependencies
 - [x] README as manpage
