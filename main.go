@@ -18,34 +18,22 @@ var Magic = []byte{0x2A, 0x2A, 0, 0}
 func main() {
 	reader := bufio.NewReader(os.Stdin)
 
-	for offset := 0; ; {
-		n, err := ReadUntil(reader, Magic)
-
-		if errors.Is(err, io.EOF) {
-			break
-		}
-
-		fmt.Printf("found at 0x%x\n", offset)
-
-		offset += n
+	for ReadUntil(reader, Magic) {
+		fmt.Printf("found\n")
 	}
 }
 
-func ReadUntil(r io.Reader, m []byte) (n int, err error) {
+func ReadUntil(r io.Reader, m []byte) bool {
 	b := make([]byte, len(m))
 
 	for !bytes.Equal(b, m) {
-		l, err := io.ReadFull(r, b)
-
-		n += l
-
-		switch {
+		switch _, err := io.ReadFull(r, b); {
 		case errors.Is(err, io.EOF):
-			break
+			return false
 		case err != nil:
 			panic(err)
 		}
 	}
 
-	return n, err
+	return true
 }
