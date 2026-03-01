@@ -3,7 +3,6 @@
 // https://blog.fox-it.com/2019/06/04/export-corrupts-windows-event-log-files/
 // https://ernw.de/download/EventManipulation.pdf
 // https://parsiya.net/blog/2018-11-01-windows-filetime-timestamps-and-byte-wrangling-with-go/
-// https://cs.opensource.google/go/x/sys/+/refs/tags/v0.41.0:windows/types_windows.go;l=803
 package main
 
 import (
@@ -20,6 +19,39 @@ import (
 
 var Signature = []byte{0x2A, 0x2A, 0, 0}
 
+type Record struct {
+	Id    uint64
+	Time  time.Time
+	Size  uint32
+	Copy  uint32
+	Event []byte
+}
+
+func NewRecord(reader io.Reader) *Record {
+	record := Record{
+		Size: ReadUint32(reader),
+		Id:   ReadUint64(reader),
+		Time: ReadTime(reader),
+	}
+
+	record.Event = ReadBytes(reader, record.Size-4-4-4-8-8)
+	record.Copy = ReadUint32(reader)
+
+	return &record
+}
+
+func (r *Record) String() string {
+	return hex.Dump(r.Event)
+}
+
+func (r *Record) Header() string {
+	return "" // TODO
+}
+
+func (r *Record) IsValid() bool {
+	return r.Size == r.Copy
+}
+
 func main() {
 	var c byte
 	var v, i uint64
@@ -27,47 +59,36 @@ func main() {
 	reader := bufio.NewReader(os.Stdin)
 
 	for ReadUntil(reader, Signature) {
-		size1 := ReadUint32(reader)
-		recid := ReadUint64(reader)
-		ftime := ReadTime(reader)
-		event := ReadBytes(reader, size1-4-4-4-8-8)
-		size2 := ReadUint32(reader)
+		record := NewRecord(reader)
 
-		if size1 == size2 {
-			c = '+'
-			v++
+		if record.IsValid() {
+			c, v = '+', v+1
 		} else {
-			c = '!'
-			i++
+			c, i = '!', i+1
 		}
 
 		fmt.Printf("[%c] found record #%d @%s : %d [0x%x] : %d [0x%x]\n",
 			c,
-			recid, ftime.Format(time.RFC3339),
-			size1, size1,
-			size2, size2,
+			record.Id,
+			record.Time.Format(time.RFC3339),
+			record.Size,
+			record.Size,
+			record.Copy,
+			record.Copy,
 		)
 
-		fmt.Printf("\n%s\n", hex.Dump(event))
+		fmt.Printf("\n%s\n", record.String())
 	}
 
 	fmt.Printf("[=] found %d (valid) / %d (invalid) records\n", v, i)
 }
 
 func ReadTime(r io.Reader) time.Time {
-	t := ReadBytes(r, 8)
+	t := int64(ReadUint64(r))
+	t -= 116444736000000000
+	t *= 100
 
-	lt := binary.LittleEndian.Uint32(t[:4])
-	ht := binary.LittleEndian.Uint32(t[4:])
-
-	// 100-nanosecond intervals since January 1, 1601
-	nsec := int64(ht)<<32 + int64(lt)
-	// change starting time to the Epoch (00:00:00 UTC, January 1, 1970)
-	nsec -= 116444736000000000
-	// convert into nanoseconds
-	nsec *= 100
-
-	return time.Unix(0, nsec)
+	return time.Unix(0, t)
 }
 
 func ReadUint64(r io.Reader) uint64 {
