@@ -7,19 +7,45 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 )
 
-var Magic = []byte{0x2A, 0x2A, 0, 0}
+var Signature = []byte{0x2A, 0x2A, 0, 0}
 
 func main() {
 	reader := bufio.NewReader(os.Stdin)
 
-	for ReadUntil(reader, Magic) {
-		fmt.Printf("found\n")
+	for ReadUntil(reader, Signature) {
+		size1 := ReadUint32(reader)
+		event := ReadBytes(reader, size1-4-4-4)
+		size2 := ReadUint32(reader)
+
+		if size1 == size2 {
+			fmt.Printf("[+] found record : %d [0x%x] : %d [0x%x]\n", size1, size1, size2, size2)
+		} else {
+			fmt.Printf("[!] found record : %d [0x%x] : %d [0x%x]\n", size1, size1, size2, size2)
+		}
+
+		fmt.Printf("\n%s\n", hex.Dump(event))
+	}
+}
+
+func ReadUint32(r io.Reader) uint32 {
+	return binary.LittleEndian.Uint32(ReadBytes(r, 4))
+}
+
+func ReadBytes(r io.Reader, n uint32) []byte {
+	b := make([]byte, n)
+
+	if n, err := r.Read(b); err == nil {
+		return b[:n]
+	} else {
+		panic(err)
 	}
 }
 
