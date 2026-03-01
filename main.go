@@ -6,38 +6,46 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 )
 
-const BLOCK = 65536 // chunk size
-
 var Magic = []byte{0x2A, 0x2A, 0, 0}
 
 func main() {
-	last := make([]byte, len(Magic))
-	buffer := make([]byte, BLOCK)
-	reader := bufio.NewReaderSize(os.Stdin, BLOCK)
+	reader := bufio.NewReader(os.Stdin)
 
-	for {
-		n, err := io.ReadFull(reader, buffer)
-
-		buffer = buffer[:n] // shrink
-
-		if n >= 4 {
-			copy(last, buffer[n-4:])
-		} else {
-			last = last[:0]
-		}
-
-		fmt.Printf("Read %d Buffer [%d] Last [%d] %x\n", n, len(buffer), len(last), last)
-
-		//fmt.Printf("found\n")
+	for offset := 0; ; {
+		n, err := ReadUntil(reader, Magic)
 
 		if errors.Is(err, io.EOF) {
 			break
 		}
+
+		fmt.Printf("found at 0x%x\n", offset)
+
+		offset += n
 	}
+}
+
+func ReadUntil(r io.Reader, m []byte) (n int, err error) {
+	b := make([]byte, len(m))
+
+	for !bytes.Equal(b, m) {
+		l, err := io.ReadFull(r, b)
+
+		n += l
+
+		switch {
+		case errors.Is(err, io.EOF):
+			break
+		case err != nil:
+			panic(err)
+		}
+	}
+
+	return n, err
 }
