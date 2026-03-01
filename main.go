@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -37,6 +38,23 @@ func NewRecord(reader io.Reader) *Record {
 	record.Event = ReadBytes(reader, record.Size-4-4-4-8-8)
 	record.Copy = ReadUint32(reader)
 
+	// @0x04 = 0x01 "normal" = alles zwischen 01 und 02 ist der Name als String ohne NULL
+	// 		   01 name 02 ...04 00 = <name>...</name>
+
+	// @0x04 = 0x0C template instance
+	//
+
+	// Plan: Alle token types parsen, map aufbauen mit Namen als Key und byte array als value
+	// 		 Wenn template definiert wird, dann template map aufbauen mit key und value
+	//       Wenn template verwendet wird, dann template auflösen und einsetzen.
+
+	switch record.Event[0x04] {
+	case 0x01:
+		// normal
+	case 0x0C:
+		// template instance
+	}
+
 	return &record
 }
 
@@ -45,7 +63,14 @@ func (r *Record) String() string {
 }
 
 func (r *Record) Header() string {
-	return "" // TODO
+	var sb strings.Builder
+
+	sb.WriteString(fmt.Sprintf("ID:   %d\n", r.Id))
+	sb.WriteString(fmt.Sprintf("Time: %s\n", r.Time.Format(time.RFC3339)))
+	sb.WriteString(fmt.Sprintf("Size: %d [0x%x]\n", r.Size, r.Size))
+	sb.WriteString(fmt.Sprintf("Copy: %d [0x%x]\n", r.Copy, r.Copy))
+
+	return sb.String()
 }
 
 func (r *Record) IsValid() bool {
@@ -67,17 +92,9 @@ func main() {
 			c, i = '!', i+1
 		}
 
-		fmt.Printf("[%c] found record #%d @%s : %d [0x%x] : %d [0x%x]\n",
-			c,
-			record.Id,
-			record.Time.Format(time.RFC3339),
-			record.Size,
-			record.Size,
-			record.Copy,
-			record.Copy,
-		)
+		fmt.Printf("[%c] found record #%d\n", c, record.Id)
 
-		fmt.Printf("\n%s\n", record.String())
+		fmt.Printf("\n%s\n%s\n", record.Header(), record.String())
 	}
 
 	fmt.Printf("[=] found %d (valid) / %d (invalid) records\n", v, i)
