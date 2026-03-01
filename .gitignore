@@ -36,4 +36,3 @@ go.work.sum
 
 # test files
 *.dd
-*.evtx

@@ -16,18 +16,18 @@ DESCRIPTION
 - [ ] Calculate pool limit on thread count
 - [x] Read from `STDIN`
 - [x] Write to `STDOUT`
-- [ ] Ignore `STDERR`
+- [ ] Debug to `STDERR`
 - [x] Panic any time
 - [x] Exit with `0` or `1`
 - [x] No usage
 - [ ] No Windows
-- [ ] No dependencies
+- [x] No dependencies
 - [x] README as manpage
 - [ ] Answer the four primary questions
-  - What?
-  - When?
-  - Where?
-  - Who?
+  - [ ] What?
+  - [x] When?
+  - [ ] Where?
+  - [ ] Who?
 
 EXAMPLES
 ========
