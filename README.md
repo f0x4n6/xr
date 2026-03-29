@@ -1,15 +1,16 @@
 NAME
 ====
 
-**hee** — High Performance Event Extractor
+**tri** — High Performance Triage Tool
 
 SYNOPSIS
 ========
 
-**STDIN** | **hee** > **STDOUT**
+**STDIN** | **tri** > **STDOUT**
 
 DESCRIPTION
 ===========
+
 - [ ] Set process priority
 - [ ] Set max threads
 - [ ] Use byte pool
@@ -32,7 +33,7 @@ DESCRIPTION
 EXAMPLES
 ========
 
-cat nist.dd | hee | uniq > events.log
+cat nist.dd | tri | uniq > events.log
 
 SEE ALSO
 ========

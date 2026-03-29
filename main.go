@@ -18,7 +18,7 @@ import (
 	"time"
 )
 
-var Signature = []byte{0x2A, 0x2A, 0, 0}
+var Signature = []byte{0x2A, 0x2A, 0x00, 0x00}
 
 type Record struct {
 	Id    uint64
