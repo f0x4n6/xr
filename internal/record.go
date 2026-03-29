@@ -18,15 +18,15 @@ type Record struct {
 	Event []byte
 }
 
-func NewRecord(reader io.Reader) *Record {
+func NewRecord(r io.Reader) *Record {
 	record := Record{
-		Size: ReadUint32(reader),
-		Id:   ReadUint64(reader),
-		Time: ReadTime(reader),
+		Size: ReadUint32(r),
+		Id:   ReadUint64(r),
+		Time: ReadTime(r),
 	}
 
-	record.Event = ReadBytes(reader, record.Size-4-4-4-8-8)
-	record.Copy = ReadUint32(reader)
+	record.Event = ReadBytes(r, record.Size-4-4-4-8-8)
+	record.Copy = ReadUint32(r)
 
 	// @0x04 = 0x01 "normal" = alles zwischen 01 und 02 ist der Name als String ohne NULL
 	// 		   01 name 02 ...04 00 = <name>...</name>
