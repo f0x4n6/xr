@@ -1,3 +1,3 @@
-module github.com/f0x4n6/tri
+module go.foxforensics.dev/tri
 
 go 1.26

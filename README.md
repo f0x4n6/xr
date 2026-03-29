@@ -1,7 +1,7 @@
 NAME
 ====
 
-**tri** — High Performance Triage Tool
+**tri** — High Performance Event Triage
 
 SYNOPSIS
 ========
