@@ -25,7 +25,7 @@ DESCRIPTION
 - [x] No dependencies
 - [x] README as manpage
 - [ ] Answer the four primary questions
-  - [ ] What?
+  - [x] What?
   - [x] When?
   - [ ] Where?
   - [ ] Who?

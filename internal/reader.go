@@ -8,8 +8,8 @@ import (
 	"time"
 )
 
-func ReadTime(r io.Reader) time.Time {
-	nsec := int64(ReadUint64(r))
+func FileTime(t uint64) time.Time {
+	nsec := int64(t)
 	nsec -= 116444736000000000
 	nsec *= 100
 

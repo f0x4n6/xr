@@ -1,6 +1,41 @@
+// Package internal
+// 00000000  0f 01 01 00|0c|01|9e 3a  ca a6|16 24 00 00|14 00  |.......:...$....|
+// 00000010  00 00|01 00 04 00|01 00  04 00|02 00 06 00|02 00  |................|
+// 00000020  06 00|02 00 06 00|08 00  15 00|08 00 11 00|00 00  |................|
+// 00000030  00 00|04 00 08 00|04 00  08 00|08 00 0a 00|01 00  |................|
+// 00000040  04 00|0c 00 13 00|00 00  00 00|00 00 00 00|00 00  |................|
+// 00000050  00 00 00 00 00 00 00 00  00 00 00 00 00 00 65 01  |..............e.|
+// 00000060  21 00 04 00 00 00 85 1b  00 40 00 00 00 00 00 00  |!........@......|
+// 00000070  80 80 2c 20 1d 72 85 84  d3 01 04 02 00 00 c4 03  |.., .r..........|
+// 00000080  00 00[8b 03 00 00]00 00  00 00 00 01 01 00 00 00  |................|
+// 00000090  00 00 05 12 00 00 00 0f  01 01 00 0c 01 59 41 b6  |.............YA.|
+// 000000a0  26 4d 76 00 00 05 00 00  00 30 00 01 00 a2 00 01  |&Mv......0......|
+// 000000b0  00 22 00 01 00 18 00 01  00 32 00 01 00 56 00 4d  |.".......2...V.M|
+// 000000c0  00 77 00 61 00 72 00 65  00 20 00 53 00 6e 00 61  |.w.a.r.e. .S.n.a|
+// 000000d0  00 70 00 73 00 68 00 6f  00 74 00 20 00 50 00 72  |.p.s.h.o.t. .P.r|
+// 000000e0  00 6f 00 76 00 69 00 64  00 65 00 72 00 43 00 3a  |.o.v.i.d.e.r.C.:|
+// 000000f0  00 5c 00 57 00 69 00 6e  00 64 00 6f 00 77 00 73  |.\.W.i.n.d.o.w.s|
+// 00000100  00 5c 00 73 00 79 00 73  00 74 00 65 00 6d 00 33  |.\.s.y.s.t.e.m.3|
+// 00000110  00 32 00 5c 00 64 00 6c  00 6c 00 68 00 6f 00 73  |.2.\.d.l.l.h.o.s|
+// 00000120  00 74 00 2e 00 65 00 78  00 65 00 20 00 2f 00 50  |.t...e.x.e. ./.P|
+// 00000130  00 72 00 6f 00 63 00 65  00 73 00 73 00 69 00 64  |.r.o.c.e.s.s.i.d|
+// 00000140  00 3a 00 7b 00 32 00 36  00 30 00 46 00 39 00 42  |.:.{.2.6.0.F.9.B|
+// 00000150  00 45 00 37 00 2d 00 45  00 42 00 35 00 30 00 2d  |.E.7.-.E.B.5.0.-|
+// 00000160  00 34 00 33 00 30 00 36  00 2d 00 42 00 37 00 45  |.4.3.0.6.-.B.7.E|
+// 00000170  00 38 00 2d 00 35 00 45  00 42 00 35 00 44 00 39  |.8.-.5.E.B.5.D.9|
+// 00000180  00 43 00 38 00 42 00 35  00 34 00 37 00 7d 00 75  |.C.8.B.5.4.7.}.u|
+// 00000190  00 73 00 65 00 72 00 20  00 6d 00 6f 00 64 00 65  |.s.e.r. .m.o.d.e|
+// 000001a0  00 20 00 73 00 65 00 72  00 76 00 69 00 63 00 65  |. .s.e.r.v.i.c.e|
+// 000001b0  00 64 00 65 00 6d 00 61  00 6e 00 64 00 20 00 73  |.d.e.m.a.n.d. .s|
+// 000001c0  00 74 00 61 00 72 00 74  00 4e 00 54 00 20 00 41  |.t.a.r.t.N.T. .A|
+// 000001d0  00 55 00 54 00 48 00 4f  00 52 00 49 00 54 00 59  |.U.T.H.O.R.I.T.Y|
+// 000001e0  00 5c 00 4c 00 6f 00 63  00 61 00 6c 00 53 00 65  |.\.L.o.c.a.l.S.e|
+// 000001f0  00 72 00 76 00 69 00 63  00 65 00 00 00 00 12 00  |.r.v.i.c.e......|
+// 00000200  00 00 01 00                                       |....|
 package internal
 
 import (
+	"bytes"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
@@ -12,128 +47,67 @@ import (
 var Signature = []byte{0x2A, 0x2A, 0x00, 0x00}
 
 type Record struct {
-	Id    uint64
-	Time  time.Time
-	Size  uint32
-	Copy  uint32
-	Event []byte
+	Id      uint64
+	Time    uint64
+	Size    uint32
+	Copy    uint32
+	EventId uint16
+	Stream  []byte
+}
+
+type Item struct {
+	Size uint16
+	Type byte
+	Null byte
 }
 
 func NewRecord(r io.Reader) *Record {
 	record := Record{
 		Size: ReadUint32(r),
 		Id:   ReadUint64(r),
-		Time: ReadTime(r),
+		Time: ReadUint64(r),
 	}
 
-	record.Event = ReadBytes(r, record.Size-4-4-4-8-8)
+	record.Stream = ReadBytes(r, record.Size-4-4-4-8-8)
 	record.Copy = ReadUint32(r)
 
-	// @0x04 = 0x01 "normal" = alles zwischen 01 und 02 ist der Name als String ohne NULL
-	// 		   01 name 02 ...04 00 = <name>...</name>
+	if len(record.Stream) >= 18 {
+		r2 := bytes.NewReader(record.Stream[14:])
 
-	// @0x04 = 0x0C template instance
-	//
+		l := ReadUint32(r2)
 
-	// Plan: Alle token types parsen, map aufbauen mit Namen als Key und byte array als value
-	// 		 Wenn template definiert wird, dann template map aufbauen mit key und value
-	//       Wenn template verwendet wird, dann template auflösen und einsetzen.
+		items := make([]Item, l)
 
-	switch record.Event[0x04] {
-	case 0x01:
-		// normal
-	case 0x0C:
-		// template instance
+		offset := uint16((l * 4) + 18)
+
+		fmt.Println("Substitution:")
+
+		for i := 0; i < int(l); i++ {
+			err := binary.Read(r2, binary.LittleEndian, &items[i])
+
+			if err != nil {
+				continue
+			}
+
+			// 03 EventID
+			// 06 TimeCreated
+			// 10 EventRecordID
+
+			fmt.Printf("#%02d %04x %02x %02x\n", i, items[i].Size, items[i].Type, items[i].Null)
+		}
+
+		fmt.Println()
+
+		if len(items) >= 3 {
+			offset += items[0].Size
+			offset += items[1].Size
+			offset += items[2].Size
+
+			if int(offset-4) <= len(record.Stream) {
+				record.EventId = binary.LittleEndian.Uint16(record.Stream[offset : offset+4])
+			}
+		}
 	}
-
-	// Each record starts with a system element
-	/*
-		<Event>
-			<System>
-			</System>
-			<...>
-		</Event>
-
-		Fragment
-			Fragment header
-			0f header token
-			01 major version
-			01 minor version
-			00 flags
-
-			Element or Template instance
-			| Template instance
-				0C template instance token
-				... temp definition
-					[1] unknown
-					[4] unknown
-					[4] temp def data (or offset)
-					[4] unknown (0 = not used)
-					[16] temp id (guid)
-					[4] data size
-					... fragment header
-					... element
-					[1] end of file token (00)
-
-				... temp inst data
-					[4] number of temp values
-					... array temp value desc
-						[2] value size
-						[1] value type
-						00  unknown (empty?)
-
-					... array temp value data
-
-			| Element (empty of filled)
-				| Empty
-					element start
-					close empty element token
-				| Filled
-					01|41 element start (01 = no element, 41 attribute list exists)
-						? 0xffff (optional, dependency identifier)
-						Data size
-						? element name offset
-						Attribute list
-					close start element token
-					content
-					end element token
-
-					Name
-						[4] unknown
-						[2] name hash
-						[2] length (chars)
-						UTF-16 little-endian string with an end-of-string character
-							Idea: parse strings into map?
-
-					Content
-						element / string data / character entity reference / entity reference / CDATA / PI?
-
-						unicode text string
-							[2] length (chars)
-							... UTF-16 little-endian string without an end-of-string character
-
-						string data
-							value test / substitution
-
-							value text
-							05|45 value token
-							01    value type
-							...   value data
-
-							substitution
-								normal / optional
-
-							[4] normal
-								0x0d normal subs token
-								[2] identifier
-								[1] value type
-
-							[4] optional
-								0x0d normal subs token
-								[2] identifier
-								[1] value type
-
-	*/
 
 	return &record
 }
@@ -141,18 +115,23 @@ func NewRecord(r io.Reader) *Record {
 func (r *Record) String() string {
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf("Id:   %d\n", r.Id))
-	sb.WriteString(fmt.Sprintf("Time: %s\n", r.Time.Format(time.RFC3339)))
-	sb.WriteString(fmt.Sprintf("Size: %d [0x%04x]\n", r.Size, r.Size))
-	sb.WriteString(fmt.Sprintf("Copy: %d [0x%04x]\n\n", r.Copy, r.Copy))
-	sb.WriteString(hex.Dump(r.Event))
-
-	eventId := binary.LittleEndian.Uint16(r.Event[0x66:0x68])
-	sb.WriteString(fmt.Sprintf("\nEventID: %d [0x%04x] DEBUG\n", eventId, eventId))
+	sb.WriteString(fmt.Sprintf("Id:      %5d [0x%04x]\n", r.Id, r.Id))
+	sb.WriteString(fmt.Sprintf("Size:    %5d [0x%04x]\n", r.Size, r.Size))
+	sb.WriteString(fmt.Sprintf("Copy:    %5d [0x%04x]\n", r.Copy, r.Copy))
+	sb.WriteString(fmt.Sprintf("EventID: %5d [0x%04x]\n", r.EventId, r.EventId))
+	sb.WriteString(fmt.Sprintf("Time:    %s\n\n", FileTime(r.Time).Format(time.RFC3339)))
+	sb.WriteString(hex.Dump(r.Stream))
 
 	return sb.String()
 }
 
 func (r *Record) IsValid() bool {
-	return r.Size == r.Copy && !r.Time.IsZero()
+	return r.Size == r.Copy && r.Time > 0
+}
+
+func (r *Record) IsSkipped() bool {
+	tid1 := binary.BigEndian.Uint32(r.Stream[06:10])
+	tid2 := binary.BigEndian.Uint32(r.Stream[18:22])
+
+	return tid1 == tid2
 }
