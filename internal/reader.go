@@ -14,11 +14,21 @@ const ChunkSize = 65536
 const EpochZero = 116444736000000000
 
 func Debug(format string, a ...any) {
-	_, _ = fmt.Fprintf(os.Stderr, format, a...)
+	_, _ = fmt.Fprintf(os.Stdout, format, a...)
 }
 
 func FileTime(t uint64) time.Time {
 	return time.Unix(0, (int64(t)-EpochZero)*100)
+}
+
+func Unicode(s []byte) []byte {
+	b := bytes.Repeat([]byte{0}, len(s)/2)
+
+	for i := 0; i < len(s)/2; i++ {
+		b[i] = s[i*2]
+	}
+
+	return b
 }
 
 func FromUtf16(s string) []byte {

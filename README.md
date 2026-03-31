@@ -14,7 +14,7 @@ DESCRIPTION
 - [ ] Answer the four primary questions
   - [x] What?
   - [x] When?
-  - [ ] Where?
+  - [x] Where?
   - [ ] Who?
 - [x] README as manpage
 - [x] Read from `STDIN`
