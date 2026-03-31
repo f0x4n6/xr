@@ -28,15 +28,13 @@ func main() {
 			internal.Debug("[-] skip record #%d\n", record.Id)
 		}
 
-		/*
-			if record.Fragment != nil {
-				fmt.Printf("%s %s %04d\n",
-					internal.FileTime(record.Time).UTC().Format(time.RFC3339),
-					record.Fragment.Computer,
-					record.Fragment.EventId,
-				)
-			}
-		*/
+		//if record.Fragment != nil {
+		//	fmt.Printf("%s %s %d\n",
+		//		internal.FileTime(record.Time).UTC().Format(time.RFC3339),
+		//		record.Fragment.Computer,
+		//		record.Fragment.EventId,
+		//	)
+		//}
 	}
 
 	internal.Debug("[*] found %d records\n", count)

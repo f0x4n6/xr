@@ -14,7 +14,7 @@ const ChunkSize = 65536
 const EpochZero = 116444736000000000
 
 func Debug(format string, a ...any) {
-	_, _ = fmt.Fprintf(os.Stdout, format, a...)
+	_, _ = fmt.Fprintf(os.Stderr, format, a...)
 }
 
 func FileTime(t uint64) time.Time {
