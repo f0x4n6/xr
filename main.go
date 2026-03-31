@@ -10,6 +10,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"time"
 
 	"go.foxforensics.dev/tri/internal"
 )
@@ -24,13 +25,19 @@ func main() {
 
 		if record.IsSizeValid() && record.IsTimeValid() {
 			count++
-			fmt.Printf("[+] found record #%d\n%s\n", record.Id, record.String())
+			internal.Debug("[+] found record #%d\n%s\n", record.Id, record.String())
 		} else {
-			fmt.Printf("[-] skip record #%d\n", record.Id)
+			internal.Debug("[-] skip record #%d\n", record.Id)
 		}
 
-		//fmt.Printf("%s %04d\n", internal.FileTime(record.Time).UTC().Format(time.RFC3339), record.EventId)
+		if record.Fragment != nil {
+			fmt.Printf("%s %s %04d\n",
+				internal.FileTime(record.Time).UTC().Format(time.RFC3339),
+				record.Fragment.Computer,
+				record.Fragment.EventId,
+			)
+		}
 	}
 
-	fmt.Printf("[*] found %d records\n", count)
+	internal.Debug("[*] found %d records\n", count)
 }

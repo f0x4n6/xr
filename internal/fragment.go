@@ -1,6 +1,5 @@
 package internal
 
-import "C"
 import (
 	"bytes"
 	"encoding/binary"
@@ -29,11 +28,10 @@ type Item struct {
 
 func NewFragment(stream []byte) *Fragment {
 	fragment := &Fragment{
-		Stream: stream,
+		TemplateId1: binary.BigEndian.Uint32(stream[TemplateOffset1 : TemplateOffset1+4]),
+		TemplateId2: binary.BigEndian.Uint32(stream[TemplateOffset2 : TemplateOffset2+4]),
+		Stream:      stream,
 	}
-
-	fragment.TemplateId1 = binary.BigEndian.Uint32(stream[TemplateOffset1 : TemplateOffset1+4])
-	fragment.TemplateId2 = binary.BigEndian.Uint32(stream[TemplateOffset2 : TemplateOffset2+4])
 
 	// skip fragment header (unused)
 	r := bytes.NewReader(stream[HeaderSize:])
@@ -57,14 +55,14 @@ func NewFragment(stream []byte) *Fragment {
 		return fragment
 	}
 
-	computer := ToUtf16String("Computer")
+	computer := FromUtf16("Computer")
 
-	fmt.Printf("%x\n", computer)
+	Debug("%x\n", computer)
 
 	if ReadUntil(r, computer) && ReadUntil(r, []byte{0x05, 0x01}) {
 		length := ReadUint16(r)
 
-		fmt.Printf("Length [%04x]", length)
+		Debug("Length [%04x]", length)
 
 		fragment.Computer = ReadBytes(r, uint32(length))
 	}

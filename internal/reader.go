@@ -4,18 +4,24 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
+	"os"
 	"time"
 )
 
 const ChunkSize = 65536
-const Epoch = 116444736000000000
+const EpochZero = 116444736000000000
 
-func ToFileTime(t uint64) time.Time {
-	return time.Unix(0, (int64(t)-Epoch)*100)
+func Debug(format string, a ...any) {
+	_, _ = fmt.Fprintf(os.Stderr, format, a...)
 }
 
-func ToUtf16String(s string) []byte {
+func FileTime(t uint64) time.Time {
+	return time.Unix(0, (int64(t)-EpochZero)*100)
+}
+
+func FromUtf16(s string) []byte {
 	b := bytes.Repeat([]byte{0}, (len(s)*2)+4)
 
 	binary.LittleEndian.PutUint16(b[0:2], uint16(len(s)))

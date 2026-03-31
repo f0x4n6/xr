@@ -98,7 +98,7 @@ func (r *Record) String() string {
 	sb.WriteString(fmt.Sprintf("Id    [0x%04x] %d\n", r.Id, r.Id))
 	sb.WriteString(fmt.Sprintf("Size  [0x%04x] %d\n", r.Size, r.Size))
 	sb.WriteString(fmt.Sprintf("Copy  [0x%04x] %d\n", r.Copy, r.Copy))
-	sb.WriteString(fmt.Sprintf("Time  %s\n", ToFileTime(r.Time).Format(time.RFC3339)))
+	sb.WriteString(fmt.Sprintf("Time  %s\n", FileTime(r.Time).Format(time.RFC3339)))
 	sb.WriteString(r.Fragment.String())
 	sb.WriteString(hex.Dump(r.Stream))
 
