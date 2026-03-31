@@ -1,4 +1,6 @@
 // Package internal
+//
+// Example record hexdump:
 // 00000000  0f 01 01 00|0c|01|9e 3a  ca a6|16 24 00 00|14 00  |.......:...$....|
 // 00000010  00 00|01 00 04 00|01 00  04 00|02 00 06 00|02 00  |................|
 // 00000020  06 00|02 00 06 00|08 00  15 00|08 00 11 00|00 00  |................|
@@ -35,8 +37,6 @@
 package internal
 
 import (
-	"bytes"
-	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -47,18 +47,12 @@ import (
 var Signature = []byte{0x2A, 0x2A, 0x00, 0x00}
 
 type Record struct {
-	Id      uint64
-	Time    uint64
-	Size    uint32
-	Copy    uint32
-	EventId uint16
-	Stream  []byte
-}
-
-type Item struct {
-	Size uint16
-	Type byte
-	Null byte
+	Id       uint64
+	Time     uint64
+	Size     uint32
+	Copy     uint32
+	Stream   []byte
+	Fragment *Fragment
 }
 
 func NewRecord(r io.Reader) *Record {
@@ -71,67 +65,42 @@ func NewRecord(r io.Reader) *Record {
 	record.Stream = ReadBytes(r, record.Size-4-4-4-8-8)
 	record.Copy = ReadUint32(r)
 
-	if len(record.Stream) >= 18 {
-		r2 := bytes.NewReader(record.Stream[14:])
-
-		l := ReadUint32(r2)
-
-		items := make([]Item, l)
-
-		offset := uint16((l * 4) + 18)
-
-		fmt.Println("Substitution:")
-
-		for i := 0; i < int(l); i++ {
-			err := binary.Read(r2, binary.LittleEndian, &items[i])
-
-			if err != nil {
-				continue
-			}
-
-			// 03 EventID
-			// 06 TimeCreated
-			// 10 EventRecordID
-
-			fmt.Printf("#%02d %04x %02x %02x\n", i, items[i].Size, items[i].Type, items[i].Null)
-		}
-
-		fmt.Println()
-
-		if len(items) >= 3 {
-			offset += items[0].Size
-			offset += items[1].Size
-			offset += items[2].Size
-
-			if int(offset-4) <= len(record.Stream) {
-				record.EventId = binary.LittleEndian.Uint16(record.Stream[offset : offset+4])
-			}
-		}
+	// invalid record size
+	if !record.IsSizeValid() {
+		return &record
 	}
 
+	// invalid stream length
+	if !record.IsStreamValid() {
+		return &record
+	}
+
+	record.Fragment = NewFragment(record.Stream)
+
 	return &record
+}
+
+func (r *Record) IsSizeValid() bool {
+	return r.Size == r.Copy && r.Size < ChunkSize
+}
+
+func (r *Record) IsTimeValid() bool {
+	return r.Time > 0
+}
+
+func (r *Record) IsStreamValid() bool {
+	return len(r.Stream) >= 22
 }
 
 func (r *Record) String() string {
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf("Id:      %5d [0x%04x]\n", r.Id, r.Id))
-	sb.WriteString(fmt.Sprintf("Size:    %5d [0x%04x]\n", r.Size, r.Size))
-	sb.WriteString(fmt.Sprintf("Copy:    %5d [0x%04x]\n", r.Copy, r.Copy))
-	sb.WriteString(fmt.Sprintf("EventID: %5d [0x%04x]\n", r.EventId, r.EventId))
-	sb.WriteString(fmt.Sprintf("Time:    %s\n\n", FileTime(r.Time).Format(time.RFC3339)))
+	sb.WriteString(fmt.Sprintf("Id    [0x%04x] %d\n", r.Id, r.Id))
+	sb.WriteString(fmt.Sprintf("Size  [0x%04x] %d\n", r.Size, r.Size))
+	sb.WriteString(fmt.Sprintf("Copy  [0x%04x] %d\n", r.Copy, r.Copy))
+	sb.WriteString(fmt.Sprintf("Time  %s\n", ToFileTime(r.Time).Format(time.RFC3339)))
+	sb.WriteString(r.Fragment.String())
 	sb.WriteString(hex.Dump(r.Stream))
 
 	return sb.String()
-}
-
-func (r *Record) IsValid() bool {
-	return r.Size == r.Copy && r.Time > 0
-}
-
-func (r *Record) IsSkipped() bool {
-	tid1 := binary.BigEndian.Uint32(r.Stream[06:10])
-	tid2 := binary.BigEndian.Uint32(r.Stream[18:22])
-
-	return tid1 == tid2
 }

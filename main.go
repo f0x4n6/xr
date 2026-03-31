@@ -22,22 +22,15 @@ func main() {
 	for internal.ReadUntil(reader, internal.Signature) {
 		record := internal.NewRecord(reader)
 
-		if record.IsSkipped() {
-			fmt.Printf("[-] skip record #%d\n\n", record.Id)
-			continue
-		}
-
-		if record.IsValid() {
-			fmt.Printf("[+] found record #%d\n\n", record.Id)
+		if record.IsSizeValid() && record.IsTimeValid() {
+			count++
+			fmt.Printf("[+] found record #%d\n%s\n", record.Id, record.String())
 		} else {
-			fmt.Printf("[!] found record #%d (corrupt)\n\n", record.Id)
+			fmt.Printf("[-] skip record #%d\n", record.Id)
 		}
 
-		count++
-
-		fmt.Println(record.String())
 		//fmt.Printf("%s %04d\n", internal.FileTime(record.Time).UTC().Format(time.RFC3339), record.EventId)
 	}
 
-	fmt.Printf("[+] found %d records\n", count)
+	fmt.Printf("[*] found %d records\n", count)
 }
