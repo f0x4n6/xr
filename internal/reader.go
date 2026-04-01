@@ -8,30 +8,21 @@ import (
 	"io"
 	"os"
 	"time"
+	"unicode/utf16"
 )
 
 const ChunkSize = 65536
 const EpochZero = 116444736000000000
 
 func Debug(format string, a ...any) {
-	_, _ = fmt.Fprintf(os.Stderr, format, a...)
+	_, _ = fmt.Fprintf(os.Stdout, format, a...)
 }
 
 func FileTime(t uint64) time.Time {
 	return time.Unix(0, (int64(t)-EpochZero)*100)
 }
 
-func Unicode(s []byte) []byte {
-	b := bytes.Repeat([]byte{0}, len(s)/2)
-
-	for i := 0; i < len(s)/2; i++ {
-		b[i] = s[i*2]
-	}
-
-	return b
-}
-
-func FromUtf16(s string) []byte {
+func ToUtf16(s string) []byte {
 	b := bytes.Repeat([]byte{0}, (len(s)*2)+4)
 
 	binary.LittleEndian.PutUint16(b[0:2], uint16(len(s)))
@@ -41,6 +32,16 @@ func FromUtf16(s string) []byte {
 	}
 
 	return b
+}
+
+func FromUtf16(b []byte) string {
+	s := make([]uint16, len(b)/2)
+
+	for i := 0; i < len(s); i++ {
+		s[i] = uint16(b[i*2]) | uint16(b[i*2+1])<<8
+	}
+
+	return string(utf16.Decode(s))
 }
 
 func ReadUint64(r io.Reader) uint64 {

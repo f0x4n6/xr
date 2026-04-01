@@ -8,6 +8,7 @@ package main
 
 import (
 	"bufio"
+	"maps"
 	"os"
 
 	"go.foxforensics.dev/tri/internal"
@@ -37,5 +38,9 @@ func main() {
 		//}
 	}
 
-	internal.Debug("[*] found %d records\n", count)
+	for k, v := range maps.All(internal.Computers) {
+		internal.Debug("[+] Computer [%08x] %s\n", k, v)
+	}
+
+	internal.Debug("\n[*] found %d records\n", count)
 }
