@@ -45,7 +45,7 @@ func NewRecord(r io.Reader) *Record {
 }
 
 func (r *Record) IsSizeValid() bool {
-	return r.Size == r.Copy && r.Size < ChunkSize
+	return r.Size == r.Copy && r.Size > HeaderSize && r.Size < ChunkSize
 }
 
 func (r *Record) IsTimeValid() bool {

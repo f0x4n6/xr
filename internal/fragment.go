@@ -71,6 +71,24 @@ func NewFragment(stream []byte) *Fragment {
 	if len(fragment.Items) > 12 && fragment.Items[12].Type == TypeSid {
 		_ = fragment.GetItemData(12)
 
+		/*
+			case 0x13: // SID
+				str := "S"
+				str += fmt.Sprintf("-%d", ctx.ConsumeUint8())
+
+				ctx.ConsumeUint8()
+				v_q := uint64(0)
+				for _, b := range ctx.ConsumeBytes(6) {
+				v_q = (v_q << 8) | uint64(b)
+				}
+
+				str += fmt.Sprintf("-%d", v_q)
+				for idx := 0; idx < arg.argLen-8; idx += 4 {
+				str += fmt.Sprintf("-%d", ctx.ConsumeUint32())
+				}
+				arg_values[idx] = str
+		*/
+
 		// fragment.UserId = 0 //binary.LittleEndian.Uint16(fragment.GetItemData(12))
 	}
 
