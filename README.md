@@ -1,7 +1,7 @@
 NAME
 ====
 
-**tri** — High Performance Event Triage
+**tri** — Experimental High Performance Record Stream Processor Triage
 
 triforce?
 esp - event stream processor?
@@ -15,7 +15,7 @@ SYNOPSIS
 DESCRIPTION
 ===========
 
-- [ ] Answer three primary questions
+- [x] Answer three primary questions
   - [x] What?
   - [x] When?
   - [x] Where?
@@ -27,7 +27,6 @@ DESCRIPTION
 - [x] Panic any time
 - [ ] Error handling with recover and exit
 - [x] No usage
-- [ ] No Windows
 - [x] No dependencies
 - [ ] Use byte pool
   - [ ] Calculate pool limit on thread count
