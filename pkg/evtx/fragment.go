@@ -12,10 +12,8 @@ import (
 const HeaderSize = 14
 const TemplateOffset1 = 6
 const TemplateOffset2 = 18
-const (
-	TypeUint16 = 0x06
-	TypeSid    = 0x13
-)
+const TypeUint16 = 0x06
+const TypeSid = 0x13
 
 type Fragment struct {
 	TemplateId1 uint32
@@ -67,7 +65,18 @@ func NewFragment(stream []byte) *Fragment {
 	}
 
 	if len(fragment.Items) > 12 && fragment.Items[12].Type == TypeSid {
-		_ = fragment.GetItemData(12)
+		a := fragment.GetItemData(12)
+		var v uint64
+
+		for _, b := range a[2:8] {
+			v = (v << 8) | uint64(b)
+		}
+
+		// "S-1-5-19"
+		// 01 01 00 00 00 13
+		// 01 02 00 00 00 00 00 05 13 00 00 00 (?)
+		// ??  0f 01 01 00 0c 01 59 41 b6 26 4d 76
+		utils.Debug("SID %d S-%d-%d [%x]\n", a[1], a[0], v, a)
 
 		/*
 			case 0x13: // SID
