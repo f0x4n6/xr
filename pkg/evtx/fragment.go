@@ -1,23 +1,21 @@
-package internal
+package evtx
 
 import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
 	"strings"
+
+	"go.foxforensics.dev/tri/pkg/utils"
 )
 
 const HeaderSize = 14
 const TemplateOffset1 = 6
 const TemplateOffset2 = 18
-
 const (
 	TypeUint16 = 0x06
 	TypeSid    = 0x13
 )
-
-var Computers = map[uint32]string{}
-var LastComputer string
 
 type Fragment struct {
 	TemplateId1 uint32
@@ -47,13 +45,13 @@ func NewFragment(stream []byte) *Fragment {
 		fragment.Computer = v
 	} else {
 		fragment.Computer = LastComputer + "?"
-		Debug("[!] no entry for template [%08x]\n", fragment.TemplateId1)
+		utils.Debug("[!] no entry for template [%08x]\n", fragment.TemplateId1)
 	}
 
 	// skip fragment header (unused)
 	r := bytes.NewReader(stream[HeaderSize:])
 
-	fragment.Items = make([]Item, ReadUint32(r))
+	fragment.Items = make([]Item, utils.ReadUint32(r))
 
 	// invalid substitution array length
 	if !fragment.IsItemsValid() {
@@ -102,10 +100,10 @@ func NewFragment(stream []byte) *Fragment {
 	// 00000310  39 00 30 00 4b 00 4b 00  37 00 34 00|04|41 ff ff  |9.0.K.K.7.4..A..|
 
 	// record is a template instance and carries a computer name to be cached
-	if i := bytes.Index(fragment.Stream, ToUtf16("Computer")); i >= 0 {
+	if i := bytes.Index(fragment.Stream, utils.ToUtf16("Computer")); i >= 0 {
 		if j := bytes.Index(fragment.Stream[i:], []byte{0x05, 0x01}); j >= 0 {
 			l := int(binary.LittleEndian.Uint16(fragment.Stream[i+j+2:i+j+4]) * 2)
-			LastComputer = FromUtf16(fragment.Stream[i+j+4 : i+j+4+l])
+			LastComputer = utils.FromUtf16(fragment.Stream[i+j+4 : i+j+4+l])
 			Computers[fragment.TemplateId1] = LastComputer
 			fragment.Computer = LastComputer
 		}

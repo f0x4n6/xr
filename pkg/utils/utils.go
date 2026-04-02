@@ -1,4 +1,4 @@
-package internal
+package utils
 
 import (
 	"bytes"
@@ -11,15 +11,12 @@ import (
 	"unicode/utf16"
 )
 
-const ChunkSize = 65536
-const EpochZero = 116444736000000000
-
 func Debug(format string, a ...any) {
 	_, _ = fmt.Fprintf(os.Stdout, format, a...)
 }
 
 func FileTime(t uint64) time.Time {
-	return time.Unix(0, (int64(t)-EpochZero)*100)
+	return time.Unix(0, (int64(t)-116444736000000000)*100)
 }
 
 func ToUtf16(s string) []byte {
