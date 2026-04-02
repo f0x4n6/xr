@@ -1,23 +1,24 @@
 NAME
 ====
 
-**triage**
+**tri** — High Performance Event Triage
+
+triforce?
+esp - event stream processor?
+rsp - record stream processor?
 
 SYNOPSIS
 ========
 
-**STDIN** | **triage** > **STDOUT**
+**STDIN** | **tri** > **STDOUT**
 
 DESCRIPTION
 ===========
 
-Experimental high performance event stream processor for forensic triage.
-
-- [ ] Answer the four primary questions
+- [ ] Answer three primary questions
   - [x] What?
   - [x] When?
   - [x] Where?
-  - [ ] Who?
 - [x] README as manpage
 - [x] Read from `STDIN`
 - [x] Write to `STDOUT`
@@ -26,6 +27,7 @@ Experimental high performance event stream processor for forensic triage.
 - [x] Panic any time
 - [ ] Error handling with recover and exit
 - [x] No usage
+- [ ] No Windows
 - [x] No dependencies
 - [ ] Use byte pool
   - [ ] Calculate pool limit on thread count
@@ -35,7 +37,9 @@ Experimental high performance event stream processor for forensic triage.
 EXAMPLES
 ========
 
-$ cat nist.dd | triage | uniq | sort > events.txt
+```
+$ cat nist.dd | tri | uniq | sort > events.txt
+```
 
 SEE ALSO
 ========
