@@ -10,6 +10,8 @@ import (
 	"go.foxforensics.dev/tri/pkg/utils"
 )
 
+const ChunkSize = 65536
+
 var Signature = []byte{0x2A, 0x2A, 0x00, 0x00}
 
 type Record struct {

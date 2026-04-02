@@ -15,6 +15,9 @@ const TemplateOffset2 = 18
 const TypeUint16 = 0x06
 const TypeSid = 0x13
 
+var Computers = map[uint32]string{}
+var LastComputer string
+
 type Fragment struct {
 	TemplateId1 uint32
 	TemplateId2 uint32
@@ -43,7 +46,7 @@ func NewFragment(stream []byte) *Fragment {
 		fragment.Computer = v
 	} else {
 		fragment.Computer = LastComputer + "?"
-		utils.Debug("[!] no entry for template [%08x]\n", fragment.TemplateId1)
+		utils.Debug("[!] No entry for template [%08x]\n", fragment.TemplateId1)
 	}
 
 	// skip fragment header (unused)
@@ -64,40 +67,40 @@ func NewFragment(stream []byte) *Fragment {
 		fragment.EventId = binary.LittleEndian.Uint16(fragment.GetItemData(2))
 	}
 
-	if len(fragment.Items) > 12 && fragment.Items[12].Type == TypeSid {
-		a := fragment.GetItemData(12)
-		var v uint64
+	/*
+		if len(fragment.Items) > 12 && fragment.Items[12].Type == TypeSid {
+			a := fragment.GetItemData(12)
+			var v uint64
 
-		for _, b := range a[2:8] {
-			v = (v << 8) | uint64(b)
+			for _, b := range a[2:8] {
+				v = (v << 8) | uint64(b)
+			}
+
+			// "S-1-5-19"
+			// 01 01 00 00 00 13
+			// 01 02 00 00 00 00 00 05 13 00 00 00 (?)
+			// ??  0f 01 01 00 0c 01 59 41 b6 26 4d 76
+			//utils.Debug("SID %d S-%d-%d [%x]\n", a[1], a[0], v, a)
+
+				case 0x13: // SID
+					str := "S"
+					str += fmt.Sprintf("-%d", ctx.ConsumeUint8())
+
+					ctx.ConsumeUint8()
+					v_q := uint64(0)
+					for _, b := range ctx.ConsumeBytes(6) {
+					v_q = (v_q << 8) | uint64(b)
+					}
+
+					str += fmt.Sprintf("-%d", v_q)
+					for idx := 0; idx < arg.argLen-8; idx += 4 {
+					str += fmt.Sprintf("-%d", ctx.ConsumeUint32())
+					}
+					arg_values[idx] = str
+
+			// fragment.UserId = 0 //binary.LittleEndian.Uint16(fragment.GetItemData(12))
 		}
-
-		// "S-1-5-19"
-		// 01 01 00 00 00 13
-		// 01 02 00 00 00 00 00 05 13 00 00 00 (?)
-		// ??  0f 01 01 00 0c 01 59 41 b6 26 4d 76
-		utils.Debug("SID %d S-%d-%d [%x]\n", a[1], a[0], v, a)
-
-		/*
-			case 0x13: // SID
-				str := "S"
-				str += fmt.Sprintf("-%d", ctx.ConsumeUint8())
-
-				ctx.ConsumeUint8()
-				v_q := uint64(0)
-				for _, b := range ctx.ConsumeBytes(6) {
-				v_q = (v_q << 8) | uint64(b)
-				}
-
-				str += fmt.Sprintf("-%d", v_q)
-				for idx := 0; idx < arg.argLen-8; idx += 4 {
-				str += fmt.Sprintf("-%d", ctx.ConsumeUint32())
-				}
-				arg_values[idx] = str
-		*/
-
-		// fragment.UserId = 0 //binary.LittleEndian.Uint16(fragment.GetItemData(12))
-	}
+	*/
 
 	if !fragment.IsTemplate() {
 		return fragment
@@ -136,8 +139,6 @@ func (f *Fragment) GetItemData(n int) []byte {
 		offset += f.Items[i].Size
 	}
 
-	// Debug("Item Offset: [%x]\n", offset)
-
 	if len(f.Stream) <= int(offset+f.Items[n].Size) {
 		return []byte("err")
 	}
@@ -150,9 +151,9 @@ func (f *Fragment) String() string {
 
 	sb.WriteString(fmt.Sprintf("TemplateID1  [%08x]\n", f.TemplateId1))
 	sb.WriteString(fmt.Sprintf("TemplateID2  [%08x]\n", f.TemplateId2))
+	sb.WriteString(fmt.Sprintf("Computer     %s\n", f.Computer))
 	sb.WriteString(fmt.Sprintf("EventID      %d\n", f.EventId))
 	sb.WriteString(fmt.Sprintf("UserID       %s\n", f.UserId))
-	sb.WriteString(fmt.Sprintf("Computer     %s\n", f.Computer))
 
 	for i, v := range f.Items {
 		sb.WriteString(fmt.Sprintf("Item #%02d  %04x %02x %02x = %x\n", i+1, v.Size, v.Type, v.Null, f.GetItemData(i)))

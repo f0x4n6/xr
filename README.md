@@ -1,15 +1,17 @@
 NAME
 ====
 
-**tri** — High Performance Event Triage
+**triage**
 
 SYNOPSIS
 ========
 
-**STDIN** | **tri** > **STDOUT**
+**STDIN** | **triage** > **STDOUT**
 
 DESCRIPTION
 ===========
+
+Experimental high performance event stream processor for forensic triage.
 
 - [ ] Answer the four primary questions
   - [x] What?
@@ -24,7 +26,6 @@ DESCRIPTION
 - [x] Panic any time
 - [ ] Error handling with recover and exit
 - [x] No usage
-- [ ] No Windows
 - [x] No dependencies
 - [ ] Use byte pool
   - [ ] Calculate pool limit on thread count
@@ -34,9 +35,7 @@ DESCRIPTION
 EXAMPLES
 ========
 
-```
-$ cat nist.dd | tri | uniq | sort > events.txt
-```
+$ cat nist.dd | triage | uniq | sort > events.txt
 
 SEE ALSO
 ========
