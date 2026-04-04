@@ -12,8 +12,8 @@ import (
 const HeaderSize = 14
 const TemplateOffset1 = 6
 const TemplateOffset2 = 18
-const TypeUint16 = 0x06
-const TypeSid = 0x13
+const TypeUInt16 = 0x06
+const TypeSID = 0x13
 
 type Fragment struct {
 	TemplateId1 uint32
@@ -21,6 +21,7 @@ type Fragment struct {
 	Computer    string
 	EventId     uint16
 	UserId      []byte
+	Datas       []Item
 	Items       []Item
 	Stream      []byte
 }
@@ -63,12 +64,12 @@ func NewFragment(stream []byte) *Fragment {
 		_ = binary.Read(r, binary.LittleEndian, &fragment.Items[i])
 	}
 
-	if len(fragment.Items) > 2 && fragment.Items[2].Type == TypeUint16 {
+	if len(fragment.Items) > 2 && fragment.Items[2].Type == TypeUInt16 {
 		fragment.EventId = binary.LittleEndian.Uint16(fragment.GetItemData(2))
 	}
 
 	/*
-		if len(fragment.Items) > 12 && fragment.Items[12].Type == TypeSid {
+		if len(fragment.Items) > 12 && fragment.Items[12].Type == TypeSID {
 			a := fragment.GetItemData(12)
 			var v uint64
 
@@ -106,6 +107,27 @@ func NewFragment(stream []byte) *Fragment {
 		return fragment
 	}
 
+	fmt.Printf("%x\n", stream[:16])
+
+	DataOffset := binary.LittleEndian.Uint16(stream[0x0A:0x0C])
+	DataSize := binary.LittleEndian.Uint32(stream[0x22:0x26])
+
+	fmt.Printf("DataOffset %08x %d\n", DataOffset, DataOffset)
+	fmt.Printf("DataSize   %08x %d\n", DataSize, DataSize)
+
+	fragment.Datas = make([]Item, DataSize)
+
+	r2 := bytes.NewReader(stream[DataOffset:])
+
+	for i := 0; i < len(fragment.Datas); i++ {
+		_ = binary.Read(r2, binary.LittleEndian, &fragment.Datas[i])
+	}
+
+	// 000003b0  00 00 00 00 00 00 00 00  00 00 00 00 00 f3 00 21  |...............!|
+	// 000003c0  00 04 00 00 00[7b 17] 0  80 00 00 00 00 00 00 80  |.....{..........|
+
+	// TODO: Search by NameString hash? 3b 6e
+
 	// 000002e0  04 00 00|3b 6e|08 00|43  00 6f 00 6d 00 70 00 75  |...;n..C.o.m.p.u|
 	// 000002f0  00 74 00 65 00 72 00|00  00|02|05|01|0f 00|57 00  |.t.e.r........W.|
 	// 00000300  49 00 4e 00 2d 00 54 00  49 00 50 00 33 00 4e 00  |I.N.-.T.I.P.3.N.|
@@ -113,9 +135,9 @@ func NewFragment(stream []byte) *Fragment {
 
 	// record is a template instance and carries a computer name to be cached
 	if i := bytes.Index(fragment.Stream, utils.ToUtf16("Computer")); i >= 0 {
-		if j := bytes.Index(fragment.Stream[i:], []byte{0x05, 0x01}); j >= 0 {
-			l := int(binary.LittleEndian.Uint16(fragment.Stream[i+j+2:i+j+4]) * 2)
-			LastComputer = utils.FromUtf16(fragment.Stream[i+j+4 : i+j+4+l])
+		if j := bytes.Index(fragment.Stream[i:], []byte{0x02}); j >= 0 {
+			l := int(binary.LittleEndian.Uint16(fragment.Stream[i+j+3:i+j+5]) * 2)
+			LastComputer = utils.FromUtf16(fragment.Stream[i+j+5 : i+j+5+l])
 			Computers[fragment.TemplateId1] = LastComputer
 			fragment.Computer = LastComputer
 		}
@@ -154,6 +176,12 @@ func (f *Fragment) String() string {
 	sb.WriteString(fmt.Sprintf("[+] Computer     %s\n", f.Computer))
 	sb.WriteString(fmt.Sprintf("[+] EventID      %d\n", f.EventId))
 	sb.WriteString(fmt.Sprintf("[+] UserID       %s\n", f.UserId))
+	sb.WriteString(fmt.Sprintf("[+] Datas        %d\n", len(f.Datas)))
+
+	for i, v := range f.Datas {
+		sb.WriteString(fmt.Sprintf("[+]  #%02d %04x %02x %02x = %x\n", i+1, v.Size, v.Type, v.Null, 0))
+	}
+
 	sb.WriteString(fmt.Sprintf("[+] Items        %d\n", len(f.Items)))
 
 	for i, v := range f.Items {

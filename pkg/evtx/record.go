@@ -64,7 +64,7 @@ func (r *Record) String() string {
 	sb.WriteString(fmt.Sprintf("[+] Id    [%04x] %d\n", r.Id, r.Id))
 	sb.WriteString(fmt.Sprintf("[+] Size  [%04x] %d\n", r.Size, r.Size))
 	sb.WriteString(fmt.Sprintf("[+] Copy  [%04x] %d\n", r.Copy, r.Copy))
-	sb.WriteString(fmt.Sprintf("[+] Time  %s\n", utils.FileTime(r.Time).Format(time.RFC3339)))
+	sb.WriteString(fmt.Sprintf("[+] Time  %s\n", utils.FileTime(r.Time).UTC().Format(time.RFC3339)))
 	sb.WriteString(r.Fragment.String())
 	sb.WriteString("[+] Event Stream\n\n")
 	sb.WriteString(hex.Dump(r.Stream))
