@@ -15,9 +15,6 @@ const TemplateOffset2 = 18
 const TypeUint16 = 0x06
 const TypeSid = 0x13
 
-var Computers = map[uint32]string{}
-var LastComputer string
-
 type Fragment struct {
 	TemplateId1 uint32
 	TemplateId2 uint32
@@ -46,7 +43,10 @@ func NewFragment(stream []byte) *Fragment {
 		fragment.Computer = v
 	} else {
 		fragment.Computer = LastComputer + "?"
-		utils.Debug("[!] No entry for template [%08x]\n", fragment.TemplateId1)
+
+		if Debug {
+			utils.Debug("[!] No entry for template [%08x]\n", fragment.TemplateId1)
+		}
 	}
 
 	// skip fragment header (unused)
@@ -149,14 +149,15 @@ func (f *Fragment) GetItemData(n int) []byte {
 func (f *Fragment) String() string {
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf("TemplateID1  [%08x]\n", f.TemplateId1))
-	sb.WriteString(fmt.Sprintf("TemplateID2  [%08x]\n", f.TemplateId2))
-	sb.WriteString(fmt.Sprintf("Computer     %s\n", f.Computer))
-	sb.WriteString(fmt.Sprintf("EventID      %d\n", f.EventId))
-	sb.WriteString(fmt.Sprintf("UserID       %s\n", f.UserId))
+	sb.WriteString(fmt.Sprintf("[+] TemplateID1  [%08x]\n", f.TemplateId1))
+	sb.WriteString(fmt.Sprintf("[+] TemplateID2  [%08x]\n", f.TemplateId2))
+	sb.WriteString(fmt.Sprintf("[+] Computer     %s\n", f.Computer))
+	sb.WriteString(fmt.Sprintf("[+] EventID      %d\n", f.EventId))
+	sb.WriteString(fmt.Sprintf("[+] UserID       %s\n", f.UserId))
+	sb.WriteString(fmt.Sprintf("[+] Items        %d\n", len(f.Items)))
 
 	for i, v := range f.Items {
-		sb.WriteString(fmt.Sprintf("Item #%02d  %04x %02x %02x = %x\n", i+1, v.Size, v.Type, v.Null, f.GetItemData(i)))
+		sb.WriteString(fmt.Sprintf("[+]  #%02d %04x %02x %02x = %x\n", i+1, v.Size, v.Type, v.Null, f.GetItemData(i)))
 	}
 
 	return sb.String()
