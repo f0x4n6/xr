@@ -18,15 +18,24 @@ import (
 	"time"
 )
 
-const Chunk = 65536
-const Header = 14
-const TempID1 = 6
-const TempID2 = 18
-const EventData = Header + 12
-const EventType = 0x06
-const EventNull = 0x00
+const (
+	Magic      = 0x00002A2A
+	Chunk      = 65536
+	Header     = 14
+	TempID1    = 6
+	TempID2    = 18
+	EventData  = Header + 12
+	EventType  = 0x06
+	EventNull  = 0x00
+	TokenValue = 0x02
+	MinStream  = 22
+	MaxArray   = 20
+)
 
-var Magic = []byte{'*', '*', 0, 0}
+var Hash = []byte{0x3B, 0x6E}
+
+var u4 = make([]byte, 4)
+var u8 = make([]byte, 8)
 
 func main() {
 	defer func() {
@@ -41,7 +50,7 @@ func main() {
 	var timestamp uint64
 	var computer string
 	var eventId uint16
-	var key string
+	var template string
 
 	r := bufio.NewReaderSize(os.Stdin, Chunk)
 
@@ -53,6 +62,7 @@ func main() {
 			continue
 		}
 
+		// skip record id
 		_ = ReadUint64(r)
 
 		timestamp = ReadUint64(r)
@@ -62,50 +72,52 @@ func main() {
 			continue
 		}
 
-		b := ReadBytes(r, size-4-4-4-8-8)
+		// read binxml stream
+		b := ReadBytes(r, make([]byte, size-4-4-4-8-8))
 
 		// check if stream length is valid
-		if len(b) < 22 {
+		if len(b) < MinStream {
 			continue
 		}
 
-		// check if copy equals size
+		// check if size equals copy
 		if size != ReadUint32(r) {
 			continue
 		}
 
-		// skip fragment header (unused)
-		n := binary.LittleEndian.Uint32(b[Header : Header+4])
+		// substitution array length
+		items := binary.LittleEndian.Uint32(b[Header : Header+4])
 
-		// check substitution array length
-		if n > 20 {
+		// check array length
+		if items > MaxArray {
 			continue
 		}
 
 		// check if EventData type and null is valid
 		if b[EventData+2] == EventType && b[EventData+3] == EventNull {
-			i := Header + 4 + (n * 4) + 2 + 1 + 1
-			eventId = binary.LittleEndian.Uint16(b[i : i+2])
+			offset := Header + 4 + (items * 4) + 2 + 1 + 1
+			eventId = binary.LittleEndian.Uint16(b[offset : offset+2])
 		}
 
-		key = string(b[TempID1 : TempID1+4])
+		template = string(b[TempID1 : TempID1+4])
 
-		// record is a template instance and carries a computer name to be cached
-		if key == string(b[TempID2:TempID2+4]) {
-			if i := bytes.Index(b, []byte{0x3B, 0x6E}); i >= 0 {
-				if j := bytes.IndexByte(b[i:], 0x02); j >= 0 {
-					l := int(binary.LittleEndian.Uint16(b[i+j+3:i+j+5]) * 2)
-					cache[key] = string(b[i+j+5 : i+j+5+l])
+		// record is a template instance and has a cacheable computer name
+		if template == string(b[TempID2:TempID2+4]) {
+			if i := bytes.Index(b, Hash); i >= 0 {
+				if j := bytes.IndexByte(b[i:], TokenValue); j >= 0 {
+					offset := i + j + 5
+					length := int(binary.LittleEndian.Uint16(b[offset-2:offset]) * 2)
+					cache[template] = string(b[offset : offset+length])
 				}
 			}
 		}
 
-		// set computer by cached template
-		if v, ok := cache[key]; ok {
+		// get cached computer name by template id
+		if v, ok := cache[template]; ok {
 			computer = v
 		}
 
-		fmt.Printf("%s %s %d\n", FileTime(timestamp).UTC().Format(time.RFC3339), computer, eventId)
+		fmt.Printf("%s %s %d\n", FileTime(timestamp).UTC().Format(time.RFC3339Nano), computer, eventId)
 	}
 }
 
@@ -114,16 +126,14 @@ func FileTime(t uint64) time.Time {
 }
 
 func ReadUint64(r io.Reader) uint64 {
-	return binary.LittleEndian.Uint64(ReadBytes(r, 8))
+	return binary.LittleEndian.Uint64(ReadBytes(r, u8))
 }
 
 func ReadUint32(r io.Reader) uint32 {
-	return binary.LittleEndian.Uint32(ReadBytes(r, 4))
+	return binary.LittleEndian.Uint32(ReadBytes(r, u4))
 }
 
-func ReadBytes(r io.Reader, n uint32) []byte {
-	b := make([]byte, n)
-
+func ReadBytes(r io.Reader, b []byte) []byte {
 	if n, err := r.Read(b); err == nil {
 		return b[:n]
 	} else {
@@ -131,14 +141,14 @@ func ReadBytes(r io.Reader, n uint32) []byte {
 	}
 }
 
-func ReadUntil(r io.Reader, m []byte) bool {
-	b := make([]byte, len(m))
+func ReadUntil(r io.Reader, m uint32) bool {
+	buf := make([]byte, 4)
 
-	for !bytes.Equal(b, m) {
-		switch _, err := io.ReadFull(r, b); {
-		case errors.Is(err, io.EOF):
-			return false
+	for binary.LittleEndian.Uint32(buf) != m {
+		switch _, err := io.ReadFull(r, buf); {
 		case errors.Is(err, io.ErrUnexpectedEOF):
+			fallthrough
+		case errors.Is(err, io.EOF):
 			return false
 		case err != nil:
 			panic(err)
