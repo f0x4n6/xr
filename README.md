@@ -1,7 +1,7 @@
 NAME
 ====
 
-**tri** — Experimental High Performance Record Stream Processor Triage
+**triage**
 
 triforce?
 esp - event stream processor?
@@ -10,10 +10,11 @@ rsp - record stream processor?
 SYNOPSIS
 ========
 
-**STDIN** | **tri** > **STDOUT**
+**STDIN** | **triage** > **STDOUT**
 
 DESCRIPTION
 ===========
+**triage** is an experimental high performance event record stream processor for fast forensic triaging.
 
 - [x] Answer three primary questions
   - [x] What?
@@ -25,7 +26,7 @@ DESCRIPTION
 - [x] Debug to `STDERR`
 - [x] Exit with `0` or `1`
 - [x] Panic any time
-- [ ] Error handling with recover and exit
+- [x] Error handling with recover and exit
 - [x] No usage
 - [x] No dependencies
 - [ ] Use byte pool
@@ -37,7 +38,7 @@ EXAMPLES
 ========
 
 ```
-$ cat nist.dd | tri | uniq | sort > events.txt
+$ cat nist.dd | triage | uniq | sort > events.txt
 ```
 
 SEE ALSO
