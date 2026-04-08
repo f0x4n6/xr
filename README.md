@@ -1,18 +1,22 @@
 NAME
 ====
 
-**xr** - experimental record analysis
+**xr** - experimental record analyzer
 
 SYNOPSIS
 ========
 
-INPUT | **xr** | OUTPUT
+```console
+INPUT | xr | OUTPUT
+```
 
 DESCRIPTION
 ===========
-**xr** is an experimental high performance event record analyzer for fast forensic triaging. It targets to answer three main questions about event logs: *WHEN*, *WHERE* and *WHAT* did happen? Contrary to existing tools, it answers these question by analyzing the basic event log record structure.
 
-it reads any input stream, including carved disk images.
+**xr** is an experimental high performance event record analyzer for fast forensic triaging. It targets to answer three main questions about event logs: WHEN, WHERE and WHAT did happen? Contrary to existing tools, it tries to answer these questions by analyzing the raw event log record structure, rather than parsing whole chunk blocks. By reading from any input stream, **xr** is capable of carving raw **dd** forensic disk images.
+
+TODOS
+=====
 
 - [ ] Use byte pool
   - [ ] Calculate pool limit on thread count
@@ -22,11 +26,14 @@ it reads any input stream, including carved disk images.
 EXAMPLES
 ========
 
-```
-$ cat nist.dd | xr | uniq | sort
+```console
+$ cat image.dd | xr | uniq | sort
 ```
 
 SEE ALSO
 ========
 
-**cat(1)**, **uniq(1)**, **sort(1)**
+[**dd(1)**](https://man7.org/linux/man-pages/man1/dd.1.html),
+[**cat(1)**](https://man7.org/linux/man-pages/man1/cat.1.html),
+[**uniq(1)**](https://man7.org/linux/man-pages/man1/uniq.1.html),
+[**sort(1)**](https://man7.org/linux/man-pages/man1/sort.1.html)
