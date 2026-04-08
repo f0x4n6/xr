@@ -19,6 +19,7 @@ type Fragment struct {
 	TemplateId1 uint32
 	TemplateId2 uint32
 	Computer    string
+	Provider    string
 	EventId     uint16
 	UserId      []byte
 	Datas       []Item
@@ -46,7 +47,18 @@ func NewFragment(stream []byte) *Fragment {
 		fragment.Computer = LastComputer + "?"
 
 		if Debug {
-			utils.Debug("[!] No entry for template [%08x]\n", fragment.TemplateId1)
+			utils.Debug("[!] No computer for template [%08x]\n", fragment.TemplateId1)
+		}
+	}
+
+	// set provider by cached template
+	if v, ok := Providers[fragment.TemplateId1]; ok {
+		fragment.Provider = v
+	} else {
+		fragment.Provider = LastProvider + "?"
+
+		if Debug {
+			utils.Debug("[!] No provider for template [%08x]\n", fragment.TemplateId1)
 		}
 	}
 
@@ -117,16 +129,33 @@ func NewFragment(stream []byte) *Fragment {
 
 	fragment.Datas = make([]Item, DataSize)
 
+	if int(DataOffset) > len(stream) {
+		fmt.Printf("[!] DataOffset too big\n")
+		return fragment
+	}
+
 	r2 := bytes.NewReader(stream[DataOffset:])
 
 	for i := 0; i < len(fragment.Datas); i++ {
 		_ = binary.Read(r2, binary.LittleEndian, &fragment.Datas[i])
 	}
 
+	// 00000120  06 3d 03 00 00 00 00 00  00|4b 95|04 00|4e 00 61  |.=.......K...N.a|
+	// 00000130  00 6d 00 65 00|00 00|05  01|08 00|45 00 76 00 65  |.m.e.......E.v.e|
+	// 00000140  00 6e 00 74 00 4c 00 6f  00 67 00|03|41|03 00 4d  |.n.t.L.o.g..A..M|
+
+	// record is a template instance and carries a provider name to be cached
+	if i := bytes.Index(fragment.Stream, utils.ToUtf16("Name")); i >= 0 {
+		if j := bytes.Index(fragment.Stream[i:], []byte{0x05, 0x01}); j >= 0 {
+			l := int(binary.LittleEndian.Uint16(fragment.Stream[i+j+2:i+j+4]) * 2)
+			LastProvider = utils.FromUtf16(fragment.Stream[i+j+4 : i+j+4+l])
+			Providers[fragment.TemplateId1] = LastProvider
+			fragment.Provider = LastProvider
+		}
+	}
+
 	// 000003b0  00 00 00 00 00 00 00 00  00 00 00 00 00 f3 00 21  |...............!|
 	// 000003c0  00 04 00 00 00[7b 17] 0  80 00 00 00 00 00 00 80  |.....{..........|
-
-	// TODO: Search by NameString hash? 3b 6e
 
 	// 000002e0  04 00 00|3b 6e|08 00|43  00 6f 00 6d 00 70 00 75  |...;n..C.o.m.p.u|
 	// 000002f0  00 74 00 65 00 72 00|00  00|02|05|01|0f 00|57 00  |.t.e.r........W.|
@@ -135,9 +164,9 @@ func NewFragment(stream []byte) *Fragment {
 
 	// record is a template instance and carries a computer name to be cached
 	if i := bytes.Index(fragment.Stream, utils.ToUtf16("Computer")); i >= 0 {
-		if j := bytes.Index(fragment.Stream[i:], []byte{0x02}); j >= 0 {
-			l := int(binary.LittleEndian.Uint16(fragment.Stream[i+j+3:i+j+5]) * 2)
-			LastComputer = utils.FromUtf16(fragment.Stream[i+j+5 : i+j+5+l])
+		if j := bytes.Index(fragment.Stream[i:], []byte{0x05, 0x01}); j >= 0 {
+			l := int(binary.LittleEndian.Uint16(fragment.Stream[i+j+2:i+j+4]) * 2)
+			LastComputer = utils.FromUtf16(fragment.Stream[i+j+4 : i+j+4+l])
 			Computers[fragment.TemplateId1] = LastComputer
 			fragment.Computer = LastComputer
 		}
@@ -174,6 +203,7 @@ func (f *Fragment) String() string {
 	sb.WriteString(fmt.Sprintf("[+] TemplateID1  [%08x]\n", f.TemplateId1))
 	sb.WriteString(fmt.Sprintf("[+] TemplateID2  [%08x]\n", f.TemplateId2))
 	sb.WriteString(fmt.Sprintf("[+] Computer     %s\n", f.Computer))
+	sb.WriteString(fmt.Sprintf("[+] Provider     %s\n", f.Provider))
 	sb.WriteString(fmt.Sprintf("[+] EventID      %d\n", f.EventId))
 	sb.WriteString(fmt.Sprintf("[+] UserID       %s\n", f.UserId))
 	sb.WriteString(fmt.Sprintf("[+] Datas        %d\n", len(f.Datas)))

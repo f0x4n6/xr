@@ -12,4 +12,7 @@ const ChunkSize = 65536
 var Debug = false
 
 var Computers = map[uint32]string{}
+var Providers = map[uint32]string{}
+
 var LastComputer string
+var LastProvider string
