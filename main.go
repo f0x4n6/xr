@@ -39,7 +39,7 @@ func main() {
 	}()
 
 	for r := bufio.NewReaderSize(os.Stdin, Chunk); ReadUntil(r); {
-		if sz = ReadUint32(r); sz < 14 || sz > Chunk {
+		if sz = ReadUint32(r); sz < 28 || sz > Chunk {
 			continue // check sane size
 		}
 
