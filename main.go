@@ -1,3 +1,9 @@
+// Experimental record analysis.
+//
+// Usage:
+//
+//	INPUT | xr | OUTPUT
+//
 // https://github.com/libyal/libevtx/blob/main/documentation/Windows%20XML%20Event%20Log%20(EVTX).asciidoc
 // https://github.com/libyal/libfwnt/blob/main/documentation/Security%20Descriptor.asciidoc
 // https://www.researchgate.net/publication/222426407_Introducing_the_Microsoft_Vista_event_log_file_format
@@ -19,20 +25,19 @@ import (
 )
 
 const (
-	Magic      = 0x00002A2A
-	Chunk      = 65536
-	Header     = 14
-	TempID1    = 6
-	TempID2    = 18
-	EventData  = Header + 12
-	EventType  = 0x06
-	EventNull  = 0x00
-	TokenValue = 0x02
-	MinStream  = 22
-	MaxArray   = 20
+	Chunk     = 65536
+	Header    = 14
+	TempID1   = 6
+	TempID2   = 18
+	EventId   = Header + 12
+	MinStream = 22
+	MaxItems  = 20
+	Layout    = "2006.01.02T15:04:05.0000000"
 )
 
 var Hash = []byte{0x3B, 0x6E}
+
+var cache = map[string]string{}
 
 var u4 = make([]byte, 4)
 var u8 = make([]byte, 8)
@@ -40,21 +45,19 @@ var u8 = make([]byte, 8)
 func main() {
 	defer func() {
 		if err := recover(); err != nil {
-			_, _ = fmt.Fprintln(os.Stderr, err)
+			_, _ = fmt.Fprintln(os.Stderr, "xr:", err)
 			os.Exit(1)
 		}
 	}()
 
-	var cache = map[string]string{}
-
 	var timestamp uint64
+	var template string
 	var computer string
 	var eventId uint16
-	var template string
 
 	r := bufio.NewReaderSize(os.Stdin, Chunk)
 
-	for ReadUntil(r, Magic) {
+	for ReadUntil(r, 0x00002A2A) {
 		size := ReadUint32(r)
 
 		// check if size is sane
@@ -85,26 +88,27 @@ func main() {
 			continue
 		}
 
-		// substitution array length
+		// get substitution array length
 		items := binary.LittleEndian.Uint32(b[Header : Header+4])
 
 		// check array length
-		if items > MaxArray {
+		if items > MaxItems {
 			continue
 		}
 
-		// check if EventData type and null is valid
-		if b[EventData+2] == EventType && b[EventData+3] == EventNull {
-			offset := Header + 4 + (items * 4) + 2 + 1 + 1
-			eventId = binary.LittleEndian.Uint16(b[offset : offset+2])
+		// check if type and null are valid
+		if b[EventId+2] != 0x06 || b[EventId+3] != 0x00 {
+			continue
 		}
 
+		offset := Header + 4 + (items * 4) + 2 + 1 + 1
+		eventId = binary.LittleEndian.Uint16(b[offset : offset+2])
 		template = string(b[TempID1 : TempID1+4])
 
 		// record is a template instance and has a cacheable computer name
 		if template == string(b[TempID2:TempID2+4]) {
 			if i := bytes.Index(b, Hash); i >= 0 {
-				if j := bytes.IndexByte(b[i:], TokenValue); j >= 0 {
+				if j := bytes.IndexByte(b[i:], 0x02); j >= 0 {
 					offset := i + j + 5
 					length := int(binary.LittleEndian.Uint16(b[offset-2:offset]) * 2)
 					cache[template] = string(b[offset : offset+length])
@@ -117,7 +121,11 @@ func main() {
 			computer = v
 		}
 
-		fmt.Printf("%s %s %d\n", FileTime(timestamp).UTC().Format(time.RFC3339Nano), computer, eventId)
+		if len(computer) > 255 {
+			computer = computer[:255]
+		}
+
+		fmt.Printf("XR|%s|%s|%d\n", FileTime(timestamp).UTC().Format(Layout), computer, eventId)
 	}
 }
 
@@ -141,10 +149,10 @@ func ReadBytes(r io.Reader, b []byte) []byte {
 	}
 }
 
-func ReadUntil(r io.Reader, m uint32) bool {
+func ReadUntil(r io.Reader, v uint32) bool {
 	buf := make([]byte, 4)
 
-	for binary.LittleEndian.Uint32(buf) != m {
+	for binary.LittleEndian.Uint32(buf) != v {
 		switch _, err := io.ReadFull(r, buf); {
 		case errors.Is(err, io.ErrUnexpectedEOF):
 			fallthrough

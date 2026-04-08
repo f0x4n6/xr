@@ -1,34 +1,19 @@
 NAME
 ====
 
-**triage**
-
-triforce?
-esp - event stream processor?
-rsp - record stream processor?
+**xr** - experimental record analysis
 
 SYNOPSIS
 ========
 
-**STDIN** | **triage** > **STDOUT**
+INPUT | **xr** | OUTPUT
 
 DESCRIPTION
 ===========
-**triage** is an experimental high performance event record stream processor for fast forensic triaging.
+**xr** is an experimental high performance event record analyzer for fast forensic triaging. It targets to answer three main questions about event logs: *WHEN*, *WHERE* and *WHAT* did happen? Contrary to existing tools, it answers these question by analyzing the basic event log record structure.
 
-- [x] Answer three primary questions
-  - [x] What?
-  - [x] When?
-  - [x] Where?
-- [x] README as manpage
-- [x] Read from `STDIN`
-- [x] Write to `STDOUT`
-- [x] Debug to `STDERR`
-- [x] Exit with `0` or `1`
-- [x] Panic any time
-- [x] Error handling with recover and exit
-- [x] No usage
-- [x] No dependencies
+it reads any input stream, including carved disk images.
+
 - [ ] Use byte pool
   - [ ] Calculate pool limit on thread count
 - [ ] Set process priority
@@ -38,7 +23,7 @@ EXAMPLES
 ========
 
 ```
-$ cat nist.dd | triage | uniq | sort > events.txt
+$ cat nist.dd | xr | uniq | sort
 ```
 
 SEE ALSO
