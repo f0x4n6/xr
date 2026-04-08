@@ -18,18 +18,20 @@ import (
 
 const Chunk = 65536
 const Magic = 0x00002A2A
+const Header = 28
 const Layout = "2006.01.02T15:04:05.0000000"
 
 var cache = make(map[string]string)
-var data4 = make([]byte, 4)
-var data8 = make([]byte, 8)
+var buf0 = make([]byte, 0, Chunk)
+var buf4 = make([]byte, 4)
+var buf8 = make([]byte, 8)
 
 func main() {
 	var b []byte
 	var ev uint16
 	var sz, n uint32
 	var id, ts uint64
-	var tp, cn string
+	var k, cn string
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -39,7 +41,7 @@ func main() {
 	}()
 
 	for r := bufio.NewReaderSize(os.Stdin, Chunk); ReadUntil(r); {
-		if sz = ReadUint32(r); sz < 28 || sz > Chunk {
+		if sz = ReadUint32(r); sz < Header || sz > Chunk {
 			continue // check sane size
 		}
 
@@ -51,7 +53,7 @@ func main() {
 			continue // check valid time
 		}
 
-		if b = ReadBytes(r, make([]byte, sz-28)); len(b) < 22 {
+		if b = ReadBytes(r, buf0[:sz-Header]); len(b) < 30 {
 			continue // check valid binxml length
 		}
 
@@ -59,26 +61,24 @@ func main() {
 			continue // check size equals copy
 		}
 
-		if n = binary.LittleEndian.Uint32(b[14:18]); n > 20 {
+		if n = binary.LittleEndian.Uint32(b[14:]); n > 20 {
 			continue // check substitution array length
 		}
 
-		if b[28] == 0x06 && b[29] == 0x00 {
-			off := (n * 4) + 22
-			ev = binary.LittleEndian.Uint16(b[off : off+2])
+		if b[28] == 6 && b[29] == 0 {
+			ev = binary.LittleEndian.Uint16(b[(n*4)+22:])
 		}
 
-		if tp = string(b[6:10]); string(b[18:22]) == tp {
+		if k = string(b[6:10]); k == string(b[18:22]) {
 			if i := bytes.Index(b, []byte{0x3B, 0x6E}); i >= 0 {
 				if j := bytes.IndexByte(b[i:], 0x02); j >= 0 {
-					off := i + j + 5
-					cache[tp] = string(b[off : off+int(binary.LittleEndian.Uint16(b[off-2:off])*2)])
+					cache[k] = Utf16String(b[i+j+3:])
 				}
 			}
 		}
 
-		if v, ok := cache[tp]; ok {
-			cn = v // get cached computer name by template id
+		if v, hit := cache[k]; hit {
+			cn = v // if not cached, use last computer name
 		}
 
 		fmt.Printf("XR|%s|%s|%d\n", FileTime(ts).Format(Layout), cn, ev)
@@ -89,12 +89,16 @@ func FileTime(t uint64) time.Time {
 	return time.Unix(0, (int64(t)-116444736000000000)*100).UTC()
 }
 
+func Utf16String(s []byte) string {
+	return string(s[2 : 2+2*binary.LittleEndian.Uint16(s)])
+}
+
 func ReadUint64(r io.Reader) uint64 {
-	return binary.LittleEndian.Uint64(ReadBytes(r, data8))
+	return binary.LittleEndian.Uint64(ReadBytes(r, buf8))
 }
 
 func ReadUint32(r io.Reader) uint32 {
-	return binary.LittleEndian.Uint32(ReadBytes(r, data4))
+	return binary.LittleEndian.Uint32(ReadBytes(r, buf4))
 }
 
 func ReadBytes(r io.Reader, b []byte) []byte {
@@ -106,12 +110,10 @@ func ReadBytes(r io.Reader, b []byte) []byte {
 }
 
 func ReadUntil(r io.Reader) bool {
-	buf := make([]byte, 4)
-
-	for binary.LittleEndian.Uint32(buf) != Magic {
-		switch _, err := io.ReadFull(r, buf); {
+	for binary.LittleEndian.Uint32(buf4) != Magic {
+		switch _, err := io.ReadFull(r, buf4); {
 		case errors.Is(err, io.ErrUnexpectedEOF):
-			fallthrough
+			return false
 		case errors.Is(err, io.EOF):
 			return false
 		case err != nil:
@@ -130,3 +132,4 @@ func ReadUntil(r io.Reader) bool {
 // https://blog.fox-it.com/2017/12/08/detection-and-recovery-of-nsas-covered-up-tracks/
 // https://parsiya.net/blog/2018-11-01-windows-filetime-timestamps-and-byte-wrangling-with-go/
 // https://ernw.de/download/EventManipulation.pdf
+// https://wtf-8.codeberg.page/
