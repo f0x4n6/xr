@@ -7,7 +7,7 @@ SYNOPSIS
 ========
 
 ```console
-INPUT | xr | OUTPUT
+$ cat FILE | xr | uniq | sort
 ```
 
 DESCRIPTION
@@ -20,13 +20,6 @@ INSTALLATION
 
 ```console
 $ go install go.foxforensics.dev/xr@latest
-```
-
-EXAMPLES
-========
-
-```console
-$ cat image.dd | xr | uniq | sort
 ```
 
 REFERENCES
