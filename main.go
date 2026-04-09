@@ -2,7 +2,7 @@
 //
 // Usage:
 //
-//	INPUT | xr | OUTPUT
+//	cat FILE | xr | uniq | sort
 package main
 
 import (
@@ -24,7 +24,6 @@ var buf8 = make([]byte, 8)
 
 func main() {
 	var b []byte
-	var e uint16
 	var l, m uint32
 	var n, t uint64
 
@@ -64,9 +63,7 @@ func main() {
 			continue
 		}
 
-		e = binary.LittleEndian.Uint16(b[(m*4)+22:])
-
-		fmt.Printf("XR|%s|%d\n", FileTime(t).Format(time.RFC3339Nano), e)
+		fmt.Printf("XR|%s|%d\n", FileTime(t).Format(time.RFC3339Nano), binary.LittleEndian.Uint16(b[(m*4)+22:]))
 	}
 }
 
