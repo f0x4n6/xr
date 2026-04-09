@@ -7,7 +7,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -17,21 +16,17 @@ import (
 )
 
 const Chunk = 65536
-const Magic = 0x00002A2A
-const Header = 28
-const Layout = "2006.01.02T15:04:05.0000000"
+const Slack = 28
 
-var cache = make(map[string]string)
 var buf0 = make([]byte, 0, Chunk)
 var buf4 = make([]byte, 4)
 var buf8 = make([]byte, 8)
 
 func main() {
 	var b []byte
-	var ev uint16
-	var sz, n uint32
-	var id, ts uint64
-	var k, cn string
+	var e uint16
+	var l, m uint32
+	var n, t uint64
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -41,62 +36,42 @@ func main() {
 	}()
 
 	for r := bufio.NewReaderSize(os.Stdin, Chunk); ReadUntil(r); {
-		if sz = ReadUint32(r); sz < Header || sz > Chunk {
+		if l = ReadUint32(r); l < Slack || l > Chunk {
 			continue // check sane size
 		}
 
-		if id = ReadUint64(r); id == 0 {
+		if n = ReadUint64(r); n == 0 {
 			continue // check valid record id
 		}
 
-		if ts = ReadUint64(r); ts == 0 {
+		if t = ReadUint64(r); t == 0 {
 			continue // check valid time
 		}
 
-		if b = ReadBytes(r, buf0[:sz-Header]); len(b) < 30 {
+		if b = ReadBytes(r, buf0[:l-Slack]); len(b) < 18 {
 			continue // check valid binxml length
 		}
 
-		if sz != ReadUint32(r) {
+		if l != ReadUint32(r) {
 			continue // check size equals copy
 		}
 
-		if n = binary.LittleEndian.Uint32(b[14:]); n > 20 {
+		if m = binary.LittleEndian.Uint32(b[14:]); m > 20 {
 			continue // check substitution array length
 		}
 
-		if b[28] == 0x06 && b[29] == 0 {
-			ev = binary.LittleEndian.Uint16(b[(n*4)+22:])
+		if b[28] != 0x06 || b[29] != 0 {
+			continue
 		}
 
-		if b[68] == 0x13 && b[69] == 0 {
-			//ev = binary.LittleEndian.Uint16(b[(n*4)+22:])
-			l := binary.LittleEndian.Uint16(b[66:])
-			println(b[:])
-		}
+		e = binary.LittleEndian.Uint16(b[(m*4)+22:])
 
-		if k = string(b[6:10]); k == string(b[18:22]) {
-			if i := bytes.Index(b, []byte{0x3B, 0x6E}); i >= 0 {
-				if j := bytes.IndexByte(b[i:], 0x02); j >= 0 {
-					cache[k] = Utf16String(b[i+j+3:])
-				}
-			}
-		}
-
-		if v, hit := cache[k]; hit {
-			cn = v // if not cached, use last computer name
-		}
-
-		fmt.Printf("XR|%s|%s|%d\n", FileTime(ts).Format(Layout), cn, ev)
+		fmt.Printf("XR|%s|%d\n", FileTime(t).Format(time.RFC3339Nano), e)
 	}
 }
 
 func FileTime(t uint64) time.Time {
 	return time.Unix(0, (int64(t)-116444736000000000)*100).UTC()
-}
-
-func Utf16String(s []byte) string {
-	return string(s[2 : 2+2*binary.LittleEndian.Uint16(s)])
 }
 
 func ReadUint64(r io.Reader) uint64 {
@@ -116,7 +91,7 @@ func ReadBytes(r io.Reader, b []byte) []byte {
 }
 
 func ReadUntil(r io.Reader) bool {
-	for binary.LittleEndian.Uint32(buf4) != Magic {
+	for binary.LittleEndian.Uint32(buf4) != 0x00002A2A {
 		switch _, err := io.ReadFull(r, buf4); {
 		case errors.Is(err, io.ErrUnexpectedEOF):
 			return false
@@ -129,13 +104,3 @@ func ReadUntil(r io.Reader) bool {
 
 	return true
 }
-
-// Sources:
-// https://github.com/libyal/libevtx/blob/main/documentation/Windows%20XML%20Event%20Log%20(EVTX).asciidoc
-// https://github.com/libyal/libfwnt/blob/main/documentation/Security%20Descriptor.asciidoc
-// https://www.researchgate.net/publication/222426407_Introducing_the_Microsoft_Vista_event_log_file_format
-// https://blog.fox-it.com/2019/06/04/export-corrupts-windows-event-log-files/
-// https://blog.fox-it.com/2017/12/08/detection-and-recovery-of-nsas-covered-up-tracks/
-// https://parsiya.net/blog/2018-11-01-windows-filetime-timestamps-and-byte-wrangling-with-go/
-// https://ernw.de/download/EventManipulation.pdf
-// https://wtf-8.codeberg.page/

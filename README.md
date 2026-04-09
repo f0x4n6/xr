@@ -13,15 +13,7 @@ INPUT | xr | OUTPUT
 DESCRIPTION
 ===========
 
-**xr** is an experimental high performance event record analyzer for fast forensic triaging. It targets to answer three main questions about event logs: WHEN, WHERE and WHAT did happen? Contrary to existing tools, it tries to answer these questions by analyzing the raw event log record structure, rather than parsing whole chunk blocks. By reading from any input stream, **xr** is capable of carving raw forensic disk and memory images.
-
-TODOS
-=====
-
-- [ ] Use byte pool
-  - [ ] Calculate pool limit on thread count
-- [ ] Set process priority
-- [ ] Set max threads
+**xr** is an experimental high performance event record analyzer for fast forensic triaging. It targets to answer two main questions about event logs: WHEN and WHAT did happen? Contrary to existing tools, it tries to answer these questions by analyzing the raw event log record structure, rather than parsing whole chunk blocks. By reading from any input stream, **xr** is capable of carving raw forensic disk and memory images.
 
 EXAMPLES
 ========
@@ -29,6 +21,13 @@ EXAMPLES
 ```console
 $ cat image.dd | xr | uniq | sort
 ```
+
+REFERENCES
+==========
+
+- _Windows XML Event Log (EVTX) format_ - Metz, Joachim
+- _Introducing the Microsoft Vista event log file format_ - Schuster, Andreas
+- _Detection and recovery of NSA’s covered up tracks_ - Jansen, Wouter
 
 SEE ALSO
 ========
