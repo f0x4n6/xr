@@ -32,9 +32,8 @@ $ cat image.dd | xr | uniq | sort
 REFERENCES
 ==========
 
-- _Windows XML Event Log (EVTX) format_ - Metz, Joachim
 - _Introducing the Microsoft Vista event log file format_ - Schuster, Andreas
-- _Detection and recovery of NSA’s covered up tracks_ - Jansen, Wouter
+- _Windows XML Event Log (EVTX) format_ - Metz, Joachim
 
 SEE ALSO
 ========
