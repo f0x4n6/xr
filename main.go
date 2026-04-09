@@ -63,7 +63,7 @@ func main() {
 			continue
 		}
 
-		fmt.Printf("XR|%s|%d\n", FileTime(t).Format(time.RFC3339Nano), binary.LittleEndian.Uint16(b[(m*4)+22:]))
+		fmt.Printf("XR|%s|%d\n", FileTime(t).Format("2006-01-02 15:04:05.0000000Z"), binary.LittleEndian.Uint16(b[(m*4)+22:]))
 	}
 }
 
