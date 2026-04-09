@@ -13,7 +13,7 @@ INPUT | xr | OUTPUT
 DESCRIPTION
 ===========
 
-**xr** is an experimental high performance event record analyzer for fast forensic triaging. It targets to answer two main questions about event logs: WHEN and WHAT did happen? Contrary to existing tools, it tries to answer these questions by analyzing the raw event log record structure, rather than parsing whole chunk blocks. By reading from any input stream, **xr** is capable of carving raw forensic disk and memory images.
+**XR** is an experimental high performance event record analyzer for fast forensic triaging. It targets to answer two main questions about event logs: WHAT and WHEN did it happen? Contrary to existing tools, it tries to answer these questions by analyzing the raw event record structure, rather than parsing whole chunks. By reading from any input stream, **XR** is capable of carving raw forensic disk and memory images.
 
 INSTALLATION
 ============
