@@ -22,7 +22,6 @@ const Header = 28
 const Layout = "2006.01.02T15:04:05.0000000"
 
 var cache = make(map[string]string)
-var cache2 = make(map[string]string)
 var buf0 = make([]byte, 0, Chunk)
 var buf4 = make([]byte, 4)
 var buf8 = make([]byte, 8)
@@ -32,7 +31,7 @@ func main() {
 	var ev uint16
 	var sz, n uint32
 	var id, ts uint64
-	var k, cn, pv string
+	var k, cn string
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -66,37 +65,29 @@ func main() {
 			continue // check substitution array length
 		}
 
-		if b[28] == 6 && b[29] == 0 {
+		if b[28] == 0x06 && b[29] == 0 {
 			ev = binary.LittleEndian.Uint16(b[(n*4)+22:])
 		}
 
-		if k = string(b[6:10]); k == string(b[18:22]) {
-			// 05 12 00 00
-
-			if i := bytes.Index(b, []byte{0x4B, 0x95}); i >= 0 {
-				if j := bytes.Index(b[i:], []byte{0x05, 0x01}); j >= 0 {
-					cache2[k] = Utf16String(b[i+j+2:])
-				} else if i := bytes.Index(b, []byte{0x05, 0x12, 0x00, 0x00}); i >= 0 {
-					cache2[k] = string(b[i+j+5:])
-				}
-			}
-
-			if i := bytes.Index(b, []byte{0x3B, 0x6E}); i >= 0 {
-				if j := bytes.Index(b[i:], []byte{0x05, 0x01}); j >= 0 {
-					cache[k] = Utf16String(b[i+j+2:])
-				}
-			}
+		if b[68] == 0x13 && b[69] == 0 {
+			//ev = binary.LittleEndian.Uint16(b[(n*4)+22:])
+			l := binary.LittleEndian.Uint16(b[66:])
+			println(b[:])
 		}
 
-		if v, hit := cache2[k]; hit {
-			pv = v // if not cached, use last computer name
+		if k = string(b[6:10]); k == string(b[18:22]) {
+			if i := bytes.Index(b, []byte{0x3B, 0x6E}); i >= 0 {
+				if j := bytes.IndexByte(b[i:], 0x02); j >= 0 {
+					cache[k] = Utf16String(b[i+j+3:])
+				}
+			}
 		}
 
 		if v, hit := cache[k]; hit {
 			cn = v // if not cached, use last computer name
 		}
 
-		fmt.Printf("XR|%s|%s|%s|%d\n", FileTime(ts).Format(Layout), cn, pv, ev)
+		fmt.Printf("XR|%s|%s|%d\n", FileTime(ts).Format(Layout), cn, ev)
 	}
 }
 
