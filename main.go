@@ -39,37 +39,37 @@ func main() {
 
 	for r := bufio.NewReaderSize(os.Stdin, Chunk); ReadUntil(r); {
 		if y = ReadUint32(r); y < Slack || y > Chunk {
-			println("abort: size", y)
+			//println("abort: size", y)
 			continue // check sane size
 		}
 
 		if x = ReadUint64(r); x == 0 {
-			println("abort: record id", x)
+			//println("abort: record id", x)
 			continue // check valid record id
 		}
 
 		if x = ReadUint64(r); x == 0 {
-			println("abort: time", x)
+			//println("abort: time", x)
 			continue // check valid time
 		}
 
-		if b = ReadBytes(r, buf0[:y-Slack]); len(b) < 18 {
-			println("abort: stream", len(b))
+		if b = ReadBytes(r, y-Slack); len(b) < 18 {
+			//println("abort: stream", len(b))
 			continue // check valid stream length
 		}
 
 		if y != ReadUint32(r) {
-			println("abort: copy", y)
+			//println("abort: copy", y)
 			continue // check size equals copy
 		}
 
 		if y = binary.LittleEndian.Uint32(b[14:]); y > 20 {
-			println("abort: items", y)
+			//println("abort: items", y)
 			continue // check substitution items
 		}
 
 		if b[28] != 0x06 || b[29] != 0 {
-			println("abort: event id")
+			//println("abort: event id")
 			continue // check event id type and null
 		}
 
@@ -81,17 +81,18 @@ func FileTime(t uint64) time.Time {
 	return time.Unix(0, (int64(t)-116444736000000000)*100).UTC()
 }
 
-func ReadUint64(r io.Reader) uint64 {
-	return binary.LittleEndian.Uint64(ReadBytes(r, buf8))
+func ReadUint64(r *bufio.Reader) uint64 {
+	return binary.LittleEndian.Uint64(ReadBytes(r, 8))
 }
 
-func ReadUint32(r io.Reader) uint32 {
-	return binary.LittleEndian.Uint32(ReadBytes(r, buf4))
+func ReadUint32(r *bufio.Reader) uint32 {
+	return binary.LittleEndian.Uint32(ReadBytes(r, 4))
 }
 
-func ReadBytes(r io.Reader, b []byte) []byte {
-	if n, err := r.Read(b); err == nil {
-		return b[:n]
+func ReadBytes(r *bufio.Reader, n uint32) []byte {
+	if b, err := r.Peek(int(n)); err == nil {
+		_, _ = r.Discard(int(n))
+		return b
 	} else {
 		panic(err)
 	}
