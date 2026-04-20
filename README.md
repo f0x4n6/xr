@@ -13,7 +13,7 @@ $ cat FILE | xr | uniq | sort
 DESCRIPTION
 ===========
 
-**XR** is an experimental fast event record analyzer for forensic triaging. It targets to answer two main questions about event logs: WHAT and WHEN did it happen? Contrary to existing tools, it tries to answer these questions by analyzing the raw event record structure, rather than parsing whole event log chunks. By reading from any input stream, xr is capable of carving raw forensic disk image and memory dumps.
+xr is an experimental fast event record analyzer for forensic triaging. It targets to answer two main questions about event logs: WHAT and WHEN did it happen? Contrary to existing tools, it tries to answer these questions by analyzing the raw event record structure, rather than parsing whole event log chunks. By reading from any input stream, xr is capable of carving raw forensic disk images and memory dumps.
 
 INSTALLATION
 ============
