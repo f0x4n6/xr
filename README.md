@@ -25,8 +25,8 @@ $ go install go.foxforensics.dev/xr@latest
 REFERENCES
 ==========
 
-- _Introducing the Microsoft Vista event log file format_ - Schuster, Andreas
-- _Windows XML Event Log (EVTX) format_ - Metz, Joachim
+- [_Introducing the Microsoft Vista event log file format_](https://doi.org/10.1016/j.diin.2007.06.015) - Schuster, Andreas
+- [_Windows XML Event Log (EVTX) format_](https://github.com/libyal/libevtx/blob/main/documentation/Windows%20XML%20Event%20Log%20(EVTX).asciidoc) - Metz, Joachim
 
 SEE ALSO
 ========
