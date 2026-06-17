@@ -7,7 +7,7 @@ SYNOPSIS
 ========
 
 ```console
-$ cat FILE | xr | uniq | sort
+$ cat FILE | xr | uniq | sort > out.tsv
 ```
 
 DESCRIPTION

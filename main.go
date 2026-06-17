@@ -2,7 +2,7 @@
 //
 // Usage:
 //
-//	cat FILE | xr | uniq | sort
+//	cat FILE | xr | uniq | sort > out.tsv
 package main
 
 import (
@@ -43,7 +43,7 @@ func main() {
 			continue // check valid time
 		}
 
-		if b = ReadBytes(r, y-Slack); len(b) < 18 {
+		if b = ReadBytes(r, y-Slack); len(b) < 30 {
 			continue // check valid stream length
 		}
 
@@ -59,7 +59,7 @@ func main() {
 			continue // check event id type and null
 		}
 
-		fmt.Printf("Record Time: %s Event ID: %d\n",
+		fmt.Printf("%s\t%d\n",
 			FileTime(x).Format("2006-01-02 15:04:05.0000000Z"),
 			binary.LittleEndian.Uint16(b[(y*4)+22:]),
 		)
